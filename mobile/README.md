@@ -28,7 +28,7 @@ Physical phones cannot use localhost to reach the computer. Use the computer LAN
 
 ## Google Maps setup
 
-Enable Maps SDK for Android and Maps SDK for iOS in Google Cloud. Android keys must allow package com.carbooking.mobile and the signing SHA-1. iOS keys must allow bundle identifier com.carbooking.mobile. A browser key restricted by HTTP referrers will not work in a native app. The shared GOOGLE_MAPS_API_KEY is convenient for local testing; platform-specific keys override it.
+Enable Maps SDK for Android and Maps SDK for iOS in Google Cloud. Android keys must allow package com.jahanmal.carbooking and the signing SHA-1. For the current debug build use SHA-1 5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25. iOS keys must allow bundle identifier com.jahanmal.carbooking. A browser key restricted by HTTP referrers will not work in a native app. The shared GOOGLE_MAPS_API_KEY is convenient for local testing; platform-specific keys override it.
 
 Map API keys are native configuration. After adding or changing them, stop Expo and rebuild the binary with npx expo run:android or npx expo run:ios. Hot reload is not sufficient.
 
