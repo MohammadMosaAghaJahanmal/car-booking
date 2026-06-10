@@ -45,6 +45,21 @@ const stopSharing = async (req, res) => {
   } catch (error) { res.status(500).json({ message: "Could not stop sharing", error: error.message }); }
 };
 
+const completeRide = async (req, res) => {
+  try {
+    const tracking = await RideTracking.findOne({ where: { BookingId: req.params.bookingId, DriverId: req.user.id } });
+    if (!tracking) return res.status(403).json({ message: "Claim this ride before completing it" });
+    const booking = await Booking.findByPk(req.params.bookingId);
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (booking.status !== "accepted") return res.status(409).json({ message: "Only an active accepted ride can be completed" });
+    await Promise.all([booking.update({ status: "completed" }), tracking.update({ isSharing: false })]);
+    const io = req.app.get("io");
+    io.to("booking:" + booking.id).emit("driver-offline", { bookingId: booking.id, lastSeen: tracking.lastSeen });
+    await notifyUser({ userId: booking.UserId, type: "status", title: "Ride completed", message: "Booking #" + booking.id + " has been completed. Thank you for riding with us.", link: "/my-bookings", metadata: { bookingId: booking.id, status: "completed" }, io });
+    res.json({ message: "Ride completed successfully", booking });
+  } catch (error) { res.status(500).json({ message: "Could not complete ride", error: error.message }); }
+};
+
 const getTracking = async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.bookingId, { include: includes });
@@ -55,4 +70,4 @@ const getTracking = async (req, res) => {
     res.json({ booking, tracking });
   } catch (error) { res.status(500).json({ message: "Could not load tracking", error: error.message }); }
 };
-module.exports = { driverRides, claimRide, stopSharing, getTracking };
+module.exports = { driverRides, claimRide, stopSharing, completeRide, getTracking };

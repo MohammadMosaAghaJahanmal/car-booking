@@ -4,8 +4,9 @@ module.exports = ({ config }) => {
   const iosMapsKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY || commonMapsKey;
   const plugins = [...(config.plugins || [])].filter((plugin) => {
     const name = Array.isArray(plugin) ? plugin[0] : plugin;
-    return name !== 'react-native-maps' && name !== 'expo-build-properties';
+    return name !== 'react-native-maps' && name !== 'expo-build-properties' && name !== '@react-native-community/datetimepicker';
   });
+  plugins.push('@react-native-community/datetimepicker');
   plugins.push(['expo-build-properties', { android: { usesCleartextTraffic: true } }]);
   if (androidMapsKey || iosMapsKey) {
     plugins.push(['react-native-maps', {

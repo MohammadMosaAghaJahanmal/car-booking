@@ -90,6 +90,23 @@ const heroSettingSchema = z.object({
   heroImageUrl: z.url("Enter a valid hero image URL").max(2000),
 }).strict();
 
+const placesAutocompleteSchema = z.object({
+  input: z.string().trim().min(2, "Enter at least 2 characters").max(180),
+  sessionToken: z.string().trim().min(8).max(100).optional(),
+  language: z.string().regex(/^[a-z]{2}(?:-[A-Z]{2})?$/).optional().default("en"),
+  lat: optionalNumber(z.coerce.number().min(-90).max(90)),
+  lng: optionalNumber(z.coerce.number().min(-180).max(180)),
+}).refine((data) => (data.lat == null) === (data.lng == null), {
+  message: "Latitude and longitude must be provided together",
+  path: ["lat"],
+});
+
+const placeDetailsSchema = z.object({
+  placeId: z.string().trim().min(3).max(300),
+  sessionToken: z.string().trim().min(8).max(100).optional(),
+  language: z.string().regex(/^[a-z]{2}(?:-[A-Z]{2})?$/).optional().default("en"),
+});
+
 const paymentIntentSchema = z.object({ bookingId: id }).strict();
 const markPaidSchema = z.object({
   bookingId: id,
@@ -99,5 +116,5 @@ const markPaidSchema = z.object({
 module.exports = {
   registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, updateProfileSchema, changePasswordSchema, carSchema, updateCarSchema, bookingSchema,
   bookingStatusSchema, bookingQuerySchema, carQuerySchema,
-  paymentIntentSchema, markPaidSchema, heroSettingSchema,
+  paymentIntentSchema, markPaidSchema, heroSettingSchema, placesAutocompleteSchema, placeDetailsSchema,
 };

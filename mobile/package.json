@@ -5,6 +5,7 @@
   "dependencies": {
     "@expo/ui": "~56.0.18",
     "@hookform/resolvers": "^5.4.0",
+    "@react-native-community/datetimepicker": "9.1.0",
     "@stripe/stripe-react-native": "0.64.0",
     "axios": "^1.18.1",
     "expo": "~56.0.12",
