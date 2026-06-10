@@ -191,6 +191,14 @@ Car and booking list endpoints support search, filters, sorting, and pagination.
 
 Socket events include `join-booking`, `driver-location`, `driver-offline`, and `stop-sharing`.
 
+## Authentication and account lifecycle
+
+- Login stores the JWT and user summary locally, then emits an in-app authentication event so the persistent navbar updates immediately.
+- Logout disconnects Socket.IO, removes the JWT and user summary, clears navbar state, and redirects to sign in without requiring a refresh.
+- Profile name changes update local user data and all visible navigation account details immediately.
+- Password changes require the current password and invalidate active password-reset links.
+- Forgot-password tokens are random, hashed in the database, single-use, and valid for 15 minutes.
+
 ## Account settings
 
 Authenticated users can update their own display name and change their password from /profile. Account ownership comes exclusively from the verified JWT; profile routes do not accept a target user ID. Password changes require the current password, reject password reuse, and invalidate active reset links.
