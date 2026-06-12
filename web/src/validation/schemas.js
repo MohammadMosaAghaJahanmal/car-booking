@@ -23,6 +23,19 @@ export const registerSchema = z.object({
   password: z.string().min(6, "Password must contain at least 6 characters").max(72),
 });
 
+export const updateProfileSchema = z.object({
+  name: z.string().trim().min(2, "Name must contain at least 2 characters").max(100),
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Enter your current password").max(72),
+  newPassword: z.string().min(8, "New password must contain at least 8 characters").max(72),
+  confirmPassword: z.string().min(1, "Confirm your new password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
 export const carSchema = z.object({
   name: z.string().trim().min(2, "Car name must contain at least 2 characters").max(100),
   type: z.string().trim().min(2, "Vehicle type must contain at least 2 characters").max(60),

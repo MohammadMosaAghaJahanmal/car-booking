@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { disconnectSocket } from "../socket";
 import NotificationBell from "./NotificationBell";
@@ -10,13 +10,23 @@ const navClass = ({ isActive }) =>
 function Navbar() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user")));
+
+  useEffect(() => {
+    const refreshUser = () => setUser(JSON.parse(localStorage.getItem("user")));
+    window.addEventListener("profile-updated", refreshUser);
+    window.addEventListener("auth-changed", refreshUser);
+    window.addEventListener("storage", refreshUser);
+    return () => { window.removeEventListener("profile-updated", refreshUser); window.removeEventListener("auth-changed", refreshUser); window.removeEventListener("storage", refreshUser); };
+  }, []);
   const initial = user?.name?.charAt(0)?.toUpperCase() || "U";
 
   const logout = () => {
     disconnectSocket();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    setUser(null);
+    window.dispatchEvent(new Event("auth-changed"));
     setMenuOpen(false);
     navigate("/login");
   };
@@ -46,13 +56,13 @@ function Navbar() {
           {user ? (
             <>
               <NotificationBell />
-              <div className="flex items-center gap-2.5 border-l border-white/10 pl-4">
+              <Link to="/profile" className="flex items-center gap-2.5 border-l border-white/10 pl-4 transition hover:opacity-80" title="Account settings">
                 <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 text-sm font-bold shadow-md">{initial}</span>
                 <div className="max-w-28">
                   <p className="truncate text-sm font-semibold">{user.name || "Account"}</p>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{user.role || "user"}</p>
                 </div>
-              </div>
+              </Link>
               <button onClick={logout} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-rose-400/30 hover:bg-rose-400/10 hover:text-rose-300">
                 Logout
               </button>
@@ -81,6 +91,7 @@ function Navbar() {
           <div className="mx-auto flex max-w-7xl flex-col gap-1">
             <NavLink to="/" onClick={() => setMenuOpen(false)} className={navClass}>Home</NavLink>
             {user && <NavLink to="/my-bookings" onClick={() => setMenuOpen(false)} className={navClass}>My Bookings</NavLink>}
+            {user && <NavLink to="/profile" onClick={() => setMenuOpen(false)} className={navClass}>Account Settings</NavLink>}
             {user?.role === "admin" && <NavLink to="/admin" onClick={() => setMenuOpen(false)} className={navClass}>Admin Dashboard</NavLink>}
             {user?.role === "driver" && <NavLink to="/driver" onClick={() => setMenuOpen(false)} className={navClass}>Driver Console</NavLink>}
             <div className="my-3 border-t border-white/10" />

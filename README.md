@@ -7,6 +7,7 @@ CarBooking is a full-stack ride-booking platform for customers, administrators, 
 ### Customers
 - JWT registration and login
 - Secure email password reset with hashed, single-use, 15-minute tokens
+- Self-service display-name and password updates
 - Google Places pickup and destination search
 - Interactive maps, current location, automatic distance and fare calculations
 - Scheduled rides and car selection with images
@@ -167,7 +168,9 @@ Protected routes require `Authorization: Bearer <jwt>`.
 | Area | Method and endpoint | Access |
 | --- | --- | --- |
 | Auth | `POST /api/auth/register`, `POST /api/auth/login` | Public |
-| Password reset | `POST /api/auth/forgot-password`, `POST /api/auth/reset-password` | Public |
+| Password reset | POST /api/auth/forgot-password, POST /api/auth/reset-password | Public |
+| Account | GET /api/auth/profile, PUT /api/auth/profile | Authenticated owner |
+| Account | PUT /api/auth/change-password | Authenticated owner |
 | Cars | `GET /api/cars` | Public |
 | Cars | `POST /api/cars`, `PUT /api/cars/:id`, `DELETE /api/cars/:id` | Admin |
 | Uploads | `POST /api/uploads/image` | Admin |
@@ -187,6 +190,10 @@ Protected routes require `Authorization: Bearer <jwt>`.
 Car and booking list endpoints support search, filters, sorting, and pagination. Uploads use multipart field `image`; JPG, PNG, and WebP are accepted up to 5 MB.
 
 Socket events include `join-booking`, `driver-location`, `driver-offline`, and `stop-sharing`.
+
+## Account settings
+
+Authenticated users can update their own display name and change their password from /profile. Account ownership comes exclusively from the verified JWT; profile routes do not accept a target user ID. Password changes require the current password, reject password reuse, and invalidate active reset links.
 
 ## Password reset flow
 

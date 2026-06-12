@@ -104,4 +104,48 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, forgotPassword, resetPassword };
+
+const getProfile = async (req, res) => {
+  res.json({ user: { id: req.user.id, name: req.user.name, email: req.user.email, role: req.user.role } });
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    await req.user.update({ name: req.validated.body.name });
+    res.json({
+      message: "Your profile name was updated.",
+      user: { id: req.user.id, name: req.user.name, email: req.user.email, role: req.user.role },
+    });
+  } catch (error) {
+    console.error("Update profile error:", error.message);
+    res.status(500).json({ message: "We could not update your profile. Please try again." });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    const { currentPassword, newPassword } = req.validated.body;
+    if (!await bcrypt.compare(currentPassword, user.password)) {
+      return res.status(400).json({ message: "Your current password is incorrect.", fieldErrors: { currentPassword: "Your current password is incorrect." } });
+    }
+    if (await bcrypt.compare(newPassword, user.password)) {
+      return res.status(400).json({ message: "Choose a new password that is different from your current password.", fieldErrors: { newPassword: "Choose a different password." } });
+    }
+
+    await sequelize.transaction(async (transaction) => {
+      await user.update({ password: await bcrypt.hash(newPassword, 10) }, { transaction });
+      await PasswordResetToken.update(
+        { usedAt: new Date() },
+        { where: { UserId: user.id, usedAt: null }, transaction }
+      );
+    });
+
+    res.json({ message: "Your password was changed successfully." });
+  } catch (error) {
+    console.error("Change password error:", error.message);
+    res.status(500).json({ message: "We could not change your password. Please try again." });
+  }
+};
+
+module.exports = { register, login, forgotPassword, resetPassword, getProfile, updateProfile, changePassword };
