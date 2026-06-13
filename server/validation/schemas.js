@@ -68,6 +68,10 @@ const carQuerySchema = z.object({
   sortOrder: z.enum(["ASC", "DESC", "asc", "desc"]).optional().default("ASC"),
 });
 
+const heroSettingSchema = z.object({
+  heroImageUrl: z.url("Enter a valid hero image URL").max(2000),
+}).strict();
+
 const paymentIntentSchema = z.object({ bookingId: id }).strict();
 const markPaidSchema = z.object({
   bookingId: id,
@@ -77,5 +81,5 @@ const markPaidSchema = z.object({
 module.exports = {
   registerSchema, loginSchema, carSchema, updateCarSchema, bookingSchema,
   bookingStatusSchema, bookingQuerySchema, carQuerySchema,
-  paymentIntentSchema, markPaidSchema,
+  paymentIntentSchema, markPaidSchema, heroSettingSchema,
 };

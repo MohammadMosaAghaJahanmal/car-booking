@@ -3,6 +3,7 @@ import API from "../api/axios";
 import { carSchema } from "../validation/schemas";
 import BookingCalendar from "../components/BookingCalendar";
 import fallbackCarImage from "../assets/hero.png";
+import defaultHeroImage from "../assets/booking-hero-banner.png";
 
 const emptyCar = { name: "", type: "", pricePerKm: "", imageUrl: "" };
 const badge = {
@@ -24,6 +25,9 @@ function AdminDashboard() {
   const [savingCar, setSavingCar] = useState(false);
   const [updatingBooking, setUpdatingBooking] = useState(null);
   const [notice, setNotice] = useState({ type: "", text: "" });
+  const [heroUrl, setHeroUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState("");
+  const [savingHero, setSavingHero] = useState(false);
 
   const loadCars = async () => {
     try {
@@ -32,7 +36,12 @@ function AdminDashboard() {
     } catch (err) { setNotice({ type: "error", text: err.response?.data?.message || "Could not load cars." }); }
   };
 
-  useEffect(() => { loadCars(); }, []);
+  useEffect(() => {
+    // Initial remote dashboard data load.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadCars();
+    API.get("/settings/home").then(({ data }) => setHeroUrl(data.heroImageUrl || "")).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -48,6 +57,44 @@ function AdminDashboard() {
     }, filters.search ? 350 : 0);
     return () => clearTimeout(timer);
   }, [filters]);
+
+  const uploadImage = async (file, target) => {
+    if (!file) return;
+    try {
+      setUploadingImage(target);
+      const data = new FormData();
+      data.append("image", file);
+      const response = await API.post("/uploads/image", data);
+      if (target === "car") {
+        setCarForm((current) => ({ ...current, imageUrl: response.data.imageUrl }));
+        setNotice({ type: "success", text: "Car image uploaded. Save the car when ready." });
+      } else {
+        await API.put("/settings/home", { heroImageUrl: response.data.imageUrl });
+        setHeroUrl(response.data.imageUrl);
+        localStorage.setItem("heroImageVersion", String(Date.now()));
+        window.dispatchEvent(new Event("hero-banner-updated"));
+        setNotice({ type: "success", text: "Hero banner uploaded and published successfully." });
+      }
+    } catch (err) {
+      setNotice({ type: "error", text: err.response?.data?.message || "Could not upload image." });
+    } finally {
+      setUploadingImage("");
+    }
+  };
+
+  const saveHero = async () => {
+    try {
+      setSavingHero(true);
+      await API.put("/settings/home", { heroImageUrl: heroUrl });
+      localStorage.setItem("heroImageVersion", String(Date.now()));
+      window.dispatchEvent(new Event("hero-banner-updated"));
+      setNotice({ type: "success", text: "Homepage hero banner updated." });
+    } catch (err) {
+      setNotice({ type: "error", text: err.response?.data?.message || "Could not save the hero banner." });
+    } finally {
+      setSavingHero(false);
+    }
+  };
 
   const changeFilter = (name, value) => setFilters((prev) => ({ ...prev, [name]: value, page: name === "page" ? value : 1 }));
   const resetFilters = () => setFilters({ search: "", status: "", paymentStatus: "", carId: "", dateFrom: "", dateTo: "", page: 1, limit: 10, sortBy: "createdAt", sortOrder: "DESC" });
@@ -173,10 +220,32 @@ function AdminDashboard() {
           <section className="mt-7 grid gap-7 lg:grid-cols-[.72fr_1.28fr]">
             <div className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_12px_40px_rgba(15,23,42,.06)]">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">{editingCar ? "Edit vehicle" : "Fleet growth"}</p><h2 className="mt-2 text-2xl font-bold">{editingCar ? "Update car" : "Add a new car"}</h2><p className="mt-2 text-sm text-slate-500">Set the vehicle details and its per-kilometer rate.</p>
+              <div className="mt-6 rounded-2xl border border-violet-200 bg-violet-50/60 p-4">
+                <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-violet-600">Homepage appearance</p><h3 className="mt-1 font-bold text-slate-900">Hero banner</h3></div><span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-violet-600 shadow-sm">LIVE SITE</span></div>
+                <img src={heroUrl || defaultHeroImage} onError={(event) => { event.currentTarget.src = defaultHeroImage; }} alt="Hero preview" className="mt-4 h-32 w-full rounded-xl object-cover" />
+                <label className="mt-3 block"><span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">Banner URL</span><input type="url" value={heroUrl} onChange={(event) => setHeroUrl(event.target.value)} placeholder="https://example.com/banner.jpg" className={inputClass} /></label>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <label className="flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-violet-300 bg-white px-3 py-3 text-xs font-bold text-violet-700 hover:bg-violet-50">
+                    {uploadingImage === "hero" ? "Uploading..." : "Upload banner"}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingImage === "hero"} onChange={(event) => uploadImage(event.target.files?.[0], "hero")} className="hidden" />
+                  </label>
+                  <button type="button" onClick={saveHero} disabled={savingHero || !heroUrl} className="rounded-xl bg-violet-600 px-3 py-3 text-xs font-bold text-white shadow-lg shadow-violet-600/15 disabled:opacity-50">{savingHero ? "Saving..." : "Publish hero"}</button>
+                </div>
+              </div>
               <form onSubmit={saveCar} className="mt-6 space-y-4">
                 <label className="block"><span className="mb-2 block text-sm font-semibold">Car name</span><input name="name" value={carForm.name} onChange={(e) => setCarForm({ ...carForm, name: e.target.value })} placeholder="e.g. Toyota Camry" className={inputClass} required /></label>
                 <label className="block"><span className="mb-2 block text-sm font-semibold">Vehicle type</span><input name="type" value={carForm.type} onChange={(e) => setCarForm({ ...carForm, type: e.target.value })} placeholder="e.g. Sedan" className={inputClass} required /></label>
-                <label className="block"><span className="mb-2 block text-sm font-semibold">Car image URL</span><input name="imageUrl" type="url" value={carForm.imageUrl} onChange={(e) => setCarForm({ ...carForm, imageUrl: e.target.value })} placeholder="https://example.com/car.jpg" className={inputClass} /><span className="mt-1.5 block text-xs text-slate-400">Paste a direct image link. A fallback is used when empty.</span></label>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                  <span className="block text-sm font-semibold">Car image</span>
+                  <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white"><img src={carForm.imageUrl || fallbackCarImage} onError={(event) => { event.currentTarget.src = fallbackCarImage; }} alt="Car preview" className="h-36 w-full object-cover" /></div>
+                  <label className="mt-3 block"><span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">Image URL</span><input name="imageUrl" type="url" value={carForm.imageUrl} onChange={(e) => setCarForm({ ...carForm, imageUrl: e.target.value })} placeholder="https://example.com/car.jpg" className={inputClass} /></label>
+                  <div className="my-3 flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400"><span className="h-px flex-1 bg-slate-200" />or upload<span className="h-px flex-1 bg-slate-200" /></div>
+                  <label className="flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-blue-300 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700 transition hover:bg-blue-100">
+                    {uploadingImage === "car" ? "Uploading image..." : "Choose JPG, PNG, or WebP"}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingImage === "car"} onChange={(event) => uploadImage(event.target.files?.[0], "car")} className="hidden" />
+                  </label>
+                  <span className="mt-2 block text-xs text-slate-400">Maximum file size: 5 MB.</span>
+                </div>
                 <label className="block"><span className="mb-2 block text-sm font-semibold">Price per kilometer</span><div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span><input name="pricePerKm" type="number" min="0.01" step="0.01" value={carForm.pricePerKm} onChange={(e) => setCarForm({ ...carForm, pricePerKm: e.target.value })} placeholder="0.00" className={inputClass + " pl-8"} required /></div></label>
                 <button disabled={savingCar} className="w-full rounded-xl bg-blue-600 py-3.5 font-bold text-white shadow-lg shadow-blue-600/20 disabled:opacity-60">{savingCar ? "Saving..." : editingCar ? "Save changes" : "Add to fleet"}</button>
                 {editingCar && <button type="button" onClick={() => { setEditingCar(null); setCarForm(emptyCar); }} className="w-full rounded-xl border border-slate-200 py-3 text-sm font-semibold">Cancel editing</button>}

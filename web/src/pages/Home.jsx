@@ -4,6 +4,7 @@ import BookingMap from "../components/BookingMap";
 import PlaceInput from "../components/PlaceInput";
 import { bookingSchema } from "../validation/schemas";
 import fallbackCarImage from "../assets/hero.png";
+import defaultHeroImage from "../assets/booking-hero-banner.png";
 import { useNavigate } from "react-router-dom";
 function Home() {
   const [selecting, setSelecting] = useState("pickup");
@@ -23,6 +24,7 @@ function Home() {
 
 const [form, setForm] = useState({...initState});
   const [cars, setCars] = useState([]);
+  const [heroImage, setHeroImage] = useState(defaultHeroImage);
 
 
   const getCars = async () => {
@@ -30,10 +32,27 @@ const [form, setForm] = useState({...initState});
     setCars(res.data);
   };
 
+  const getHeroSettings = async () => {
+    const response = await API.get("/settings/home", { params: { timestamp: Date.now() } });
+    setHeroImage(response.data.heroImageUrl || defaultHeroImage);
+  };
+
   useEffect(() => {
-    // Initial remote fleet load.
+    // Initial remote homepage data load.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     getCars();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    getHeroSettings();
+
+    const refreshHero = () => getHeroSettings();
+    window.addEventListener("focus", refreshHero);
+    window.addEventListener("storage", refreshHero);
+    window.addEventListener("hero-banner-updated", refreshHero);
+    return () => {
+      window.removeEventListener("focus", refreshHero);
+      window.removeEventListener("storage", refreshHero);
+      window.removeEventListener("hero-banner-updated", refreshHero);
+    };
   }, []);
 
   const handleChange = (e) => {
@@ -120,7 +139,29 @@ const [form, setForm] = useState({...initState});
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb] pb-16"><section className="relative overflow-hidden bg-slate-950 px-6 pb-28 pt-20 text-white"><div className="absolute -right-24 -top-32 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl"></div><div className="relative mx-auto max-w-6xl"><p className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-blue-400">Premium rides, simple booking</p><h1 className="max-w-3xl text-5xl font-bold leading-tight tracking-tight sm:text-6xl">Your next ride, <span className="text-blue-400">beautifully simple.</span></h1><p className="mt-5 max-w-xl text-lg leading-8 text-slate-400">Choose your car, plan the route, and know the price before you book.</p><div className="mt-7 flex flex-wrap gap-6 text-sm text-slate-300"><span>+ Upfront pricing</span><span>+ Secure payments</span><span>+ Easy cancellation</span></div></div></section><div className="relative mx-auto -mt-16 max-w-6xl px-5">
+    <main className="min-h-screen bg-[#f5f7fb] pb-20">
+      <section className="relative isolate min-h-[660px] overflow-hidden bg-slate-950 text-white">
+        <img src={heroImage} onError={() => setHeroImage(defaultHeroImage)} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-slate-950/5" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/20" />
+        <div className="relative mx-auto flex min-h-[660px] max-w-7xl items-center px-6 py-20">
+          <div className="max-w-2xl">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-blue-200 backdrop-blur-md">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,.9)]" /> Premium rides, ready now
+            </div>
+            <h1 className="text-5xl font-black leading-[1.03] tracking-[-0.045em] sm:text-6xl lg:text-7xl">The city is yours.<br /><span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">Ride beautifully.</span></h1>
+            <p className="mt-7 max-w-xl text-lg leading-8 text-slate-300">Choose a car you love, see the fare instantly, and follow every kilometer with live ride tracking.</p>
+            <div className="mt-9 flex flex-wrap gap-3">
+              <a href="#book-ride" className="rounded-2xl bg-blue-600 px-7 py-4 text-sm font-bold shadow-2xl shadow-blue-600/30 transition hover:-translate-y-0.5 hover:bg-blue-500">Book your ride</a>
+              <a href="#fleet" className="rounded-2xl border border-white/15 bg-white/10 px-7 py-4 text-sm font-bold backdrop-blur-md transition hover:bg-white/15">Explore the fleet</a>
+            </div>
+            <div className="mt-12 grid max-w-xl grid-cols-3 divide-x divide-white/15 rounded-2xl border border-white/10 bg-slate-950/35 p-4 backdrop-blur-md">
+              {[["24/7", "Always available"], ["Live", "Ride tracking"], ["Upfront", "Clear pricing"]].map(([value, label]) => <div key={label} className="px-4 first:pl-1"><p className="text-xl font-black">{value}</p><p className="mt-1 text-[11px] text-slate-400">{label}</p></div>)}
+            </div>
+          </div>
+        </div>
+      </section>
+      <div id="book-ride" className="relative z-10 mx-auto -mt-16 max-w-6xl px-5">
       <div className="grid grid-cols-1 gap-7 lg:grid-cols-[1.08fr_.92fr]">
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_20px_60px_rgba(15,23,42,0.09)]">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Book Your Car</h1>
@@ -210,7 +251,7 @@ const [form, setForm] = useState({...initState});
           </form>
         </div>
 
-        <div className="rounded-3xl bg-slate-900 p-8 text-white shadow-xl">
+        <div id="fleet" className="rounded-3xl bg-slate-900 p-8 text-white shadow-xl">
           <h2 className="text-2xl font-bold mb-6">Available Cars</h2>
 
           <div className="grid gap-4 sm:grid-cols-2">
