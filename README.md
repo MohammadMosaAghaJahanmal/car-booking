@@ -1,266 +1,237 @@
-# Car Booking System
+# CarBooking
 
-A full-stack Car Booking System built for learning purposes using **MERN-style architecture with MySQL instead of MongoDB**.
+CarBooking is a full-stack ride-booking platform for customers, administrators, and drivers. It includes route planning, scheduled rides, Stripe payments, live tracking, fleet management, uploads, and notifications.
 
-This project covers real-world booking system concepts like:
+## Features
 
-- User Authentication
-- Role-based Access (User/Admin)
-- Car Management
-- Booking Management
-- Google Maps Integration
-- Current Location Detection
-- Distance Calculation
-- Stripe Payment Integration
-- Payment Refund on Booking Cancellation
+### Customers
+- JWT registration and login
+- Google Places pickup and destination search
+- Interactive maps, current location, automatic distance and fare calculations
+- Scheduled rides and car selection with images
+- Stripe checkout with polished loading, validation, success, and error states
+- Cancellation and eligible refunds
+- Live driver tracking, ride-history filters, and real-time notifications
 
----
+### Administrators
+- Booking summaries, search, filters, pagination, and calendar
+- Booking status and fleet management
+- Car and homepage hero images through URL or file upload
+- Admin-only JPG, PNG, and WebP uploads with previews and a 5 MB limit
 
-# Tech Stack
+### Drivers
+- Driver console, available rides, claiming, and assignment notifications
+- Live browser geolocation sharing and offline updates
 
-## Frontend
-- React (Vite)
-- Tailwind CSS
-- React Router DOM
-- Axios
-- Google Maps API
-- Stripe
+## Technology
 
-## Backend
-- Node.js
-- Express.js
-- MySQL
-- Sequelize ORM
-- JWT Authentication
-- bcrypt
-- Stripe API
+| Layer | Technology |
+| --- | --- |
+| Web | React 19, Vite, Tailwind CSS |
+| Data and routing | Axios, React Router |
+| Validation | Zod, React Hook Form |
+| Maps | Google Maps and Places |
+| Payments | Stripe Elements and Payment Intents |
+| API | Node.js, Express 5 |
+| Database | MySQL, Sequelize |
+| Authentication | JWT, bcrypt |
+| Real-time | Socket.IO |
+| Uploads | Multer |
 
----
+## Structure
 
-# Features
+    car-booking/
+    |-- server/
+    |   |-- controllers/    API handlers
+    |   |-- middleware/     Auth, validation, uploads
+    |   |-- models/         Sequelize models
+    |   |-- routes/         Express routes
+    |   |-- services/       Notification services
+    |   |-- socket/         Live tracking
+    |   |-- uploads/        Runtime images
+    |   `-- validation/     Zod schemas
+    `-- web/src/
+        |-- api/            Axios client
+        |-- assets/         Bundled images
+        |-- components/     Shared UI and checkout
+        |-- pages/          Application pages
+        `-- validation/     Client schemas
 
-## User Features
-- Register / Login
-- View available cars
-- Select pickup & drop location
-- Use current location
-- View route on map
-- Calculate ride distance
-- View estimated price
-- Select travel date & time
-- Create booking
-- Pay booking via Stripe
-- Cancel booking
-- Auto refund on cancellation if payment completed
+## Requirements
 
----
+- Node.js 20 or newer
+- Yarn 1.x
+- MySQL 8 or compatible
+- Google Maps key with Maps JavaScript and Places enabled
+- Stripe test-mode publishable and secret keys
 
-## Admin Features
-- Admin login
-- Add cars
-- View all bookings
-- Accept bookings
-- Complete bookings
-- Cancel bookings
-- Manage booking status
+## Installation
 
----
+    cd car-booking/server
+    yarn install
+    cd ../web
+    yarn install
 
-# Project Structure
+Create `server/.env`:
 
-```bash
-car-booking-system/
-│
-├── server/
-│   ├── config/
-│   ├── controllers/
-│   ├── middleware/
-│   ├── models/
-│   ├── routes/
-│   ├── server.js
-│
-├── web/
-│   ├── src/
-│   │   ├── api/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── App.jsx
-│   │   ├── main.jsx
-```
+    PORT=5000
+    WEB_URL=http://localhost:3000
+    DB_HOST=localhost
+    DB_NAME=car_booking_db
+    DB_USER=root
+    DB_PASSWORD=your_mysql_password
+    DB_DIALECT=mysql
+    JWT_SECRET=replace_with_a_long_random_secret
+    STRIPE_SECRET_KEY=sk_test_your_secret_key
 
----
+Create `web/.env`:
 
-# Database Models
+    VITE_GOOGLE_MAPS_API_KEY=your_google_maps_key
+    VITE_STRIPE_PUBLIC_KEY=pk_test_your_publishable_key
 
-## User
-- id
-- name
-- email
-- password
-- role
+Never commit environment files or use production Stripe keys locally.
 
-## Car
-- id
-- name
-- type
-- pricePerKm
+## Database setup
 
-## Booking
-- id
-- userId
-- carId
-- pickupAddress
-- pickupLat
-- pickupLng
-- dropAddress
-- dropLat
-- dropLng
-- distanceKm
-- totalPrice
-- travelDate
-- travelTime
-- status
-- paymentStatus
-- stripePaymentIntentId
+    CREATE DATABASE car_booking_db
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
 
----
+The API runs safe `sequelize.sync()` at startup to create missing tables.
 
-# Booking Status
+Optional development data:
 
-- pending
-- accepted
-- completed
-- cancelled
+    cd server
+    node seedAdmin.js
+    node seedDriver.js
+    node seedCars.js
 
----
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin@test.com` | `admin123` |
+| Driver | `driver@test.com` | `driver123` |
 
-# Payment Status
+Seed accounts are for local development only.
 
-- unpaid
-- paid
-- refunded
+## Running locally
 
----
+Terminal one:
 
-# API Routes
+    cd server
+    yarn dev
 
-## Auth
-- POST /api/auth/register
-- POST /api/auth/login
+Terminal two:
 
-## Cars
-- GET /api/cars
-- POST /api/cars
-- PUT /api/cars/:id
-- DELETE /api/cars/:id
+    cd web
+    yarn dev
 
-## Bookings
-- POST /api/bookings
-- GET /api/bookings/my-bookings
-- GET /api/bookings/all
-- PUT /api/bookings/:id/status
-- PUT /api/bookings/:id/cancel
+Open `http://localhost:3000`. The API uses `http://localhost:5000`.
 
-## Payments
-- POST /api/payments/create-payment-intent
-- POST /api/payments/mark-paid
+## Scripts
 
----
+| Location | Command | Purpose |
+| --- | --- | --- |
+| Server | `yarn dev` | Start with Nodemon |
+| Server | `yarn start` | Start normally |
+| Server | `yarn migrate:tracking` | Legacy tracking migration |
+| Server | `yarn seed:driver` | Create demo driver |
+| Web | `yarn dev` | Start Vite |
+| Web | `yarn build` | Production build |
+| Web | `yarn preview` | Preview build |
+| Web | `yarn lint` | Run ESLint |
 
-# Google Maps Features
+## Models
 
-- Places Autocomplete
-- Pickup & Drop Marker
-- Current Location
-- Route Drawing
-- Driving Distance Calculation
+- **User:** customer, admin, or driver.
+- **Car:** name, type, image, and per-kilometer price.
+- **Booking:** route, coordinates, schedule, fare, status, and Stripe reference.
+- **RideTracking:** driver, position, movement data, sharing state, and last seen.
+- **Notification:** persistent message, link, metadata, and read time.
+- **SiteSetting:** key-value configuration such as the homepage hero.
 
----
+Booking states: `pending`, `accepted`, `completed`, `cancelled`.
+Payment states: `unpaid`, `paid`, `refunded`.
 
-# Stripe Features
+## API overview
 
-- Payment Intent
-- Card Payment
-- Mark Booking Paid
-- Refund Payment on Cancellation
+Protected routes require `Authorization: Bearer <jwt>`.
 
----
+| Area | Method and endpoint | Access |
+| --- | --- | --- |
+| Auth | `POST /api/auth/register`, `POST /api/auth/login` | Public |
+| Cars | `GET /api/cars` | Public |
+| Cars | `POST /api/cars`, `PUT /api/cars/:id`, `DELETE /api/cars/:id` | Admin |
+| Uploads | `POST /api/uploads/image` | Admin |
+| Bookings | `POST /api/bookings`, `GET /api/bookings/my-bookings` | Customer |
+| Bookings | `GET /api/bookings/all`, `PUT /api/bookings/:id/status` | Admin |
+| Bookings | `PUT /api/bookings/:id/cancel` | Owner |
+| Payments | `POST /api/payments/create-payment-intent` | Owner |
+| Payments | `POST /api/payments/mark-paid` | Owner |
+| Tracking | `GET /api/tracking/driver/rides` | Driver |
+| Tracking | `POST /api/tracking/:bookingId/claim`, `PUT /api/tracking/:bookingId/stop` | Driver |
+| Tracking | `GET /api/tracking/:bookingId` | Ride participant |
+| Notifications | `GET /api/notifications`, `PUT /api/notifications/read-all` | Authenticated |
+| Notifications | `PUT /api/notifications/:id/read` | Owner |
+| Appearance | `GET /api/settings/home` | Public |
+| Appearance | `PUT /api/settings/home` | Admin |
 
-# Setup Backend
+Car and booking list endpoints support search, filters, sorting, and pagination. Uploads use multipart field `image`; JPG, PNG, and WebP are accepted up to 5 MB.
 
-```bash
-cd server
-yarn install
-```
+Socket events include `join-booking`, `driver-location`, `driver-offline`, and `stop-sharing`.
 
-Create `.env`
+## Secure payment flow
 
-```env
-PORT=5000
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=yourpassword
-DB_NAME=car_booking_db
-JWT_SECRET=your_jwt_secret
-STRIPE_SECRET_KEY=your_stripe_secret
-```
+1. The server verifies booking ownership and rejects paid or cancelled bookings.
+2. It creates a CAD Stripe PaymentIntent.
+3. Stripe Elements collects card details; this application never stores them.
+4. Stripe confirms the payment.
+5. The server retrieves and verifies status, amount, currency, user, and booking metadata.
+6. Only then is the booking marked paid and a notification created.
+7. Eligible paid cancellations are refunded through Stripe.
 
-Run:
+Use test mode and official Stripe test cards during development.
 
-```bash
-yarn dev
-```
+## Image storage
 
----
+Uploads are stored in `server/uploads` and served at `/uploads/:filename`. Runtime files are excluded from Git. Use durable object storage such as S3 or R2 in production.
 
-# Setup Frontend
+## Security
 
-```bash
-cd web
-yarn install
-```
+- bcrypt password hashing and JWT-protected APIs and sockets
+- Customer, admin, and driver role checks
+- Zod request validation
+- Restricted upload MIME type, count, and size
+- Server-side Stripe PaymentIntent verification
+- Environment-based secrets
 
-Create `.env`
+For production, add HTTPS, rate limiting, security headers, database backups, durable uploads, restrictive CORS, and Stripe webhooks.
 
-```env
-VITE_GOOGLE_MAPS_API_KEY=your_google_map_key
-VITE_STRIPE_PUBLIC_KEY=your_stripe_public_key
-```
+## Troubleshooting
 
-Run:
+### MySQL: Too many keys specified
+Repeated `sync({ alter: true })` can create duplicate indexes. This project uses plain `sync()`. Remove duplicate development indexes or recreate the development database.
 
-```bash
-yarn dev
-```
+### Hero image remains old
+Inspect `/api/settings/home` and confirm its `/uploads/...` URL works. Settings disable caching and refresh when the window regains focus.
 
----
+### Payment initialization fails
+Confirm Stripe keys use test mode, the booking belongs to the signed-in user, and it is neither paid nor cancelled. Safe messages appear in the UI while diagnostics remain in server logs.
 
-# Learning Goals
+### Google Maps fails
+Enable Maps JavaScript and Places, configure billing and origin restrictions, add the Vite key, and restart Vite.
 
-This project was built to learn:
+### CORS failure
+Set `WEB_URL` to the exact frontend origin and restart the API.
 
-- Backend Architecture
-- MySQL + Sequelize
-- Authentication & Authorization
-- REST APIs
-- Payment Integration
-- Google Maps Integration
-- Real-world Booking Logic
+## Production
 
----
+1. Build the web app with `yarn build`.
+2. Serve `web/dist` through a static host or reverse proxy.
+3. Start the API with production environment variables.
+4. Use HTTPS and managed MySQL.
+5. Move uploads to durable object storage.
+6. Configure Stripe webhooks and restrict API keys.
 
-# Future Improvements
-
-- Driver Panel
-- Live Driver Tracking
-- Notifications
-- Mobile App (React Native)
-- Booking History Filters
-- Coupons
-- Scheduled Rides
-
----
-
-# Author
+## Author
 
 Jahanmal Agha
