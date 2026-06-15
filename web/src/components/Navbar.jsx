@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { disconnectSocket } from "../socket";
+import NotificationBell from "./NotificationBell";
 
 const navClass = ({ isActive }) =>
   "relative rounded-lg px-3 py-2 text-sm font-semibold transition " +
@@ -44,6 +45,7 @@ function Navbar() {
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             <>
+              <NotificationBell />
               <div className="flex items-center gap-2.5 border-l border-white/10 pl-4">
                 <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 text-sm font-bold shadow-md">{initial}</span>
                 <div className="max-w-28">
@@ -62,6 +64,8 @@ function Navbar() {
             </div>
           )}
         </div>
+
+        {user && <div className="ml-auto mr-2 md:hidden"><NotificationBell /></div>}
 
         <button onClick={() => setMenuOpen((open) => !open)} className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-slate-200 md:hidden" aria-label="Toggle navigation" aria-expanded={menuOpen}>
           {menuOpen ? (

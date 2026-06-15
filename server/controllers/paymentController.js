@@ -1,5 +1,6 @@
 const Stripe = require("stripe");
 const { Booking } = require("../models");
+const { notifyUser } = require("../services/notificationService");
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -62,6 +63,7 @@ const markBookingPaid = async (req, res) => {
     booking.paymentStatus = "paid";
     booking.stripePaymentIntentId = paymentIntentId;
     await booking.save();
+    await notifyUser({ userId: booking.UserId, type: "payment", title: "Payment successful", message: "Payment for booking #" + booking.id + " was completed.", link: "/my-bookings", metadata: { bookingId: booking.id }, io: req.app.get("io") });
 
     res.json({
       message: "Booking marked as paid",

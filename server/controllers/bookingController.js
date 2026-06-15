@@ -2,6 +2,7 @@ const { Op } = require("sequelize");
 const { Booking, Car, User } = require("../models");
 const Stripe = require("stripe");
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const { notifyUser, notifyRole } = require("../services/notificationService");
 
 const createBooking = async (req, res) => {
   try {
@@ -14,6 +15,11 @@ const createBooking = async (req, res) => {
       distanceKm: Number(distanceKm), totalPrice: Number(distanceKm) * Number(car.pricePerKm),
       status: "pending", pickupLat, pickupLng, dropLat, dropLng, travelDate, travelTime,
     });
+    const io = req.app.get("io");
+    await Promise.all([
+      notifyUser({ userId: req.user.id, type: "booking", title: "Booking received", message: "Your booking #" + booking.id + " is pending confirmation.", link: "/my-bookings", metadata: { bookingId: booking.id }, io } ),
+      notifyRole({ role: "admin", type: "booking", title: "New booking", message: req.user.name + " created booking #" + booking.id + ".", link: "/admin", metadata: { bookingId: booking.id }, io } ),
+    ]);
     res.status(201).json({ message: "Booking created successfully", booking });
   } catch (error) {
     res.status(500).json({ message: "Create booking error", error: error.message });
@@ -134,6 +140,27 @@ const updateBookingStatus = async (req, res) => {
     }
     booking.status = status;
     await booking.save();
+    const io = req.app.get("io");
+    await notifyUser({
+      userId: booking.UserId,
+      type: "status",
+      title: "Booking " + status,
+      message: "Booking #" + booking.id + " is now " + status + ".",
+      link: status === "accepted" ? "/track/" + booking.id : "/my-bookings",
+      metadata: { bookingId: booking.id, status },
+      io,
+    });
+    if (status === "accepted") {
+      await notifyRole({
+        role: "driver",
+        type: "ride",
+        title: "Ride available",
+        message: "Booking #" + booking.id + " is ready to be claimed.",
+        link: "/driver",
+        metadata: { bookingId: booking.id },
+        io,
+      });
+    }
     res.json({ message: "Booking status updated", booking });
   } catch (error) {
     res.status(500).json({ message: "Update booking error", error: error.message });
@@ -152,6 +179,17 @@ const cancelMyBooking = async (req, res) => {
     }
     booking.status = "cancelled";
     await booking.save();
+    await notifyUser({
+      userId: booking.UserId,
+      type: "cancelled",
+      title: "Booking cancelled",
+      message: booking.paymentStatus === "refunded"
+        ? "Booking #" + booking.id + " was cancelled and refunded."
+        : "Booking #" + booking.id + " was cancelled.",
+      link: "/my-bookings",
+      metadata: { bookingId: booking.id },
+      io: req.app.get("io"),
+    });
     res.json({ message: booking.paymentStatus === "refunded" ? "Booking cancelled and refunded" : "Booking cancelled successfully", booking });
   } catch (error) {
     res.status(500).json({ message: "Cancel booking error", error: error.message });

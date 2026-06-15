@@ -1,4 +1,5 @@
 const { Booking, Car, User, RideTracking } = require("../models");
+const { notifyUser } = require("../services/notificationService");
 const includes = [
   { model: Car, attributes: ["id", "name", "type"] },
   { model: User, attributes: ["id", "name", "email"] },
@@ -19,6 +20,17 @@ const claimRide = async (req, res) => {
     if (booking.status !== "accepted") return res.status(409).json({ message: "Only accepted bookings can be claimed" });
     const [tracking, created] = await RideTracking.findOrCreate({ where: { BookingId: booking.id }, defaults: { BookingId: booking.id, DriverId: req.user.id } });
     if (!created && tracking.DriverId !== req.user.id) return res.status(409).json({ message: "Ride already assigned to another driver" });
+    if (created) {
+      await notifyUser({
+        userId: booking.UserId,
+        type: "driver",
+        title: "Driver assigned",
+        message: req.user.name + " is now assigned to booking #" + booking.id + ".",
+        link: "/track/" + booking.id,
+        metadata: { bookingId: booking.id, driverId: req.user.id },
+        io: req.app.get("io"),
+      });
+    }
     res.json({ message: "Ride assigned", tracking });
   } catch (error) { res.status(500).json({ message: "Could not claim ride", error: error.message }); }
 };

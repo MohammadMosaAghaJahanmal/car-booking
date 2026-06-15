@@ -21,6 +21,7 @@ module.exports = (io) => {
   });
 
   io.on("connection", (socket) => {
+    socket.join("user:" + socket.user.id);
     socket.on("join-booking", async (bookingId, ack = () => {}) => {
       const booking = await Booking.findByPk(bookingId, { include: [RideTracking] });
       if (!booking) return ack({ ok: false, message: "Booking not found" });

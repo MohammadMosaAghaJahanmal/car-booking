@@ -4,9 +4,10 @@ import BookingMap from "../components/BookingMap";
 import PlaceInput from "../components/PlaceInput";
 import { bookingSchema } from "../validation/schemas";
 import fallbackCarImage from "../assets/hero.png";
+import { useNavigate } from "react-router-dom";
 function Home() {
   const [selecting, setSelecting] = useState("pickup");
-
+  const navigate = useNavigate()
   const initState = {
   carId: "",
   pickupAddress: "",
@@ -47,6 +48,8 @@ const [form, setForm] = useState({...initState});
       alert(validation.error.issues[0].message);
       return;
     }
+    const token = localStorage.getItem("token");
+    if(!token) return navigate('/login');
 
     await API.post("/bookings", {
       carId: form.carId,

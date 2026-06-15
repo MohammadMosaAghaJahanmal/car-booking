@@ -11,6 +11,7 @@ const carRoutes = require("./routes/carRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const trackingRoutes = require("./routes/trackingRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 const setupTrackingSocket = require("./socket/trackingSocket");
 const { protect } = require("./middleware/authMiddleware");
 
@@ -28,6 +29,7 @@ app.use("/api/cars", carRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/tracking", trackingRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.get("/api/profile", protect, (req, res) => res.json({ message: "Protected profile route", user: req.user }));
 app.get("/", (req, res) => res.send("Car Booking Backend API is running..."));
 app.use((req, res) => res.status(404).json({ message: "Route not found" }));
