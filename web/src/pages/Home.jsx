@@ -3,6 +3,7 @@ import API from "../api/axios";
 import BookingMap from "../components/BookingMap";
 import PlaceInput from "../components/PlaceInput";
 import { bookingSchema } from "../validation/schemas";
+import fallbackCarImage from "../assets/hero.png";
 function Home() {
   const [selecting, setSelecting] = useState("pickup");
 
@@ -29,6 +30,8 @@ const [form, setForm] = useState({...initState});
   };
 
   useEffect(() => {
+    // Initial remote fleet load.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     getCars();
   }, []);
 
@@ -62,36 +65,24 @@ const [form, setForm] = useState({...initState});
     alert("Booking created successfully");
   };
 
-  const calculateDistance = () => {
-  if (!form.pickupLat || !form.dropLat) {
-    alert("Please select pickup and drop first");
-    return;
-  }
+  const { pickupLat, pickupLng, dropLat, dropLng } = form;
 
-  const R = 6371;
+  useEffect(() => {
+    if (!pickupLat || !pickupLng || !dropLat || !dropLng) return;
 
-  const dLat =
-    ((Number(form.dropLat) - Number(form.pickupLat)) * Math.PI) / 180;
+    const dLat = ((Number(dropLat) - Number(pickupLat)) * Math.PI) / 180;
+    const dLng = ((Number(dropLng) - Number(pickupLng)) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(Number(pickupLat) * Math.PI / 180) *
+      Math.cos(Number(dropLat) * Math.PI / 180) *
+      Math.sin(dLng / 2) ** 2;
+    const distance = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-  const dLng =
-    ((Number(form.dropLng) - Number(form.pickupLng)) * Math.PI) / 180;
+    // Distance is derived whenever either route endpoint changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm((current) => ({ ...current, distanceKm: distance.toFixed(2) }));
+  }, [pickupLat, pickupLng, dropLat, dropLng]);
 
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((Number(form.pickupLat) * Math.PI) / 180) *
-      Math.cos((Number(form.dropLat) * Math.PI) / 180) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  const distance = R * c;
-
-  setForm((prev) => ({
-    ...prev,
-    distanceKm: distance.toFixed(2),
-    }));
-  };
   const selectedCar = cars.find((car) => car.id === Number(form.carId));
 
   const totalPrice =
@@ -126,7 +117,7 @@ const [form, setForm] = useState({...initState});
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb] pb-16"><section className="relative overflow-hidden bg-slate-950 px-6 pb-28 pt-20 text-white"><div className="absolute -right-24 -top-32 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl"></div><div className="relative mx-auto max-w-6xl"><p className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-blue-400">Premium rides, simple booking</p><h1 className="max-w-3xl text-5xl font-bold leading-tight tracking-tight sm:text-6xl">Your next ride, <span className="text-blue-400">beautifully simple.</span></h1><p className="mt-5 max-w-xl text-lg leading-8 text-slate-400">Choose your car, plan the route, and know the price before you book.</p><div className="mt-7 flex flex-wrap gap-6 text-sm text-slate-300"><span> Upfront pricing</span><span> Secure payments</span><span> Easy cancellation</span></div></div></section><div className="relative mx-auto -mt-16 max-w-6xl px-5">
+    <main className="min-h-screen bg-[#f5f7fb] pb-16"><section className="relative overflow-hidden bg-slate-950 px-6 pb-28 pt-20 text-white"><div className="absolute -right-24 -top-32 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl"></div><div className="relative mx-auto max-w-6xl"><p className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-blue-400">Premium rides, simple booking</p><h1 className="max-w-3xl text-5xl font-bold leading-tight tracking-tight sm:text-6xl">Your next ride, <span className="text-blue-400">beautifully simple.</span></h1><p className="mt-5 max-w-xl text-lg leading-8 text-slate-400">Choose your car, plan the route, and know the price before you book.</p><div className="mt-7 flex flex-wrap gap-6 text-sm text-slate-300"><span>+ Upfront pricing</span><span>+ Secure payments</span><span>+ Easy cancellation</span></div></div></section><div className="relative mx-auto -mt-16 max-w-6xl px-5">
       <div className="grid grid-cols-1 gap-7 lg:grid-cols-[1.08fr_.92fr]">
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_20px_60px_rgba(15,23,42,0.09)]">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Book Your Car</h1>
@@ -137,6 +128,7 @@ const [form, setForm] = useState({...initState});
           <form onSubmit={createBooking} className="space-y-4">
             <select
               name="carId"
+              value={form.carId}
               onChange={handleChange}
               className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3.5 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
               required
@@ -182,8 +174,8 @@ const [form, setForm] = useState({...initState});
               placeholder="Distance KM"
               type="number"
               value={form.distanceKm}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3.5 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+              readOnly
+              className="w-full rounded-xl border border-slate-200 bg-slate-100 p-3.5 font-semibold text-slate-600 outline-none"
               required
             />
             <input
@@ -218,23 +210,27 @@ const [form, setForm] = useState({...initState});
         <div className="rounded-3xl bg-slate-900 p-8 text-white shadow-xl">
           <h2 className="text-2xl font-bold mb-6">Available Cars</h2>
 
-          <div className="space-y-4">
-            {cars.map((car) => (
-              <div
-                key={car.id}
-                className="flex justify-between rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:bg-white/10"
-              >
-                <div>
-                  <h3 className="text-xl font-semibold">{car.name}</h3>
-                  <p className="text-gray-300">{car.type}</p>
-                </div>
-
-                <div className="text-right">
-                  <p className="text-2xl font-bold">${car.pricePerKm}</p>
-                  <p className="text-gray-300 text-sm">per km</p>
-                </div>
-              </div>
-            ))}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {cars.map((car) => {
+              const active = Number(form.carId) === car.id;
+              return (
+                <button
+                  type="button"
+                  key={car.id}
+                  onClick={() => setForm((current) => ({ ...current, carId: String(car.id) }))}
+                  className={"group overflow-hidden rounded-2xl border text-left transition " + (active ? "border-blue-400 bg-blue-500/10 ring-2 ring-blue-500/20" : "border-white/10 bg-white/5 hover:-translate-y-1 hover:bg-white/10")}
+                >
+                  <div className="relative h-36 overflow-hidden bg-slate-800">
+                    <img src={car.imageUrl || fallbackCarImage} onError={(event) => { event.currentTarget.src = fallbackCarImage; }} alt={car.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                    {active && <span className="absolute right-3 top-3 rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white">Selected</span>}
+                  </div>
+                  <div className="flex items-center justify-between gap-3 p-4">
+                    <div><h3 className="font-bold text-white">{car.name}</h3><p className="mt-1 text-sm text-slate-400">{car.type}</p></div>
+                    <div className="text-right"><p className="text-xl font-bold text-white">{"$" + car.pricePerKm}</p><p className="text-xs text-slate-400">per km</p></div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -256,13 +252,10 @@ const [form, setForm] = useState({...initState});
         </button>
       </div>
       <BookingMap form={form} setForm={setForm} selecting={selecting} />
-      <button
-        type="button"
-        onClick={calculateDistance}
-        className="mt-4 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-      >
-        Calculate Distance
-      </button>
+      <div className="mt-4 flex items-center gap-3 rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-700">
+        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+        Pickup and destination automatically update the driving route, distance, and estimated price.
+      </div>
     </div>
     </div>
   </main>

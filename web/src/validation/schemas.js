@@ -15,6 +15,7 @@ export const carSchema = z.object({
   name: z.string().trim().min(2, "Car name must contain at least 2 characters").max(100),
   type: z.string().trim().min(2, "Vehicle type must contain at least 2 characters").max(60),
   pricePerKm: z.coerce.number().positive("Price per km must be greater than zero").max(100000),
+  imageUrl: z.union([z.url("Enter a valid image URL"), z.literal("")]).optional(),
 });
 
 export const bookingSchema = z.object({

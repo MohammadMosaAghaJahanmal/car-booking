@@ -18,6 +18,11 @@ const Car = sequelize.define("Car", {
     allowNull: false,
   },
 
+  imageUrl: {
+    type: DataTypes.STRING(1000),
+    allowNull: true,
+  },
+
   pricePerKm: {
     type: DataTypes.FLOAT,
     allowNull: false,

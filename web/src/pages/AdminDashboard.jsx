@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import API from "../api/axios";
 import { carSchema } from "../validation/schemas";
 import BookingCalendar from "../components/BookingCalendar";
+import fallbackCarImage from "../assets/hero.png";
 
-const emptyCar = { name: "", type: "", pricePerKm: "" };
+const emptyCar = { name: "", type: "", pricePerKm: "", imageUrl: "" };
 const badge = {
   pending: "bg-amber-50 text-amber-700", accepted: "bg-blue-50 text-blue-700",
   completed: "bg-emerald-50 text-emerald-700", cancelled: "bg-rose-50 text-rose-700",
@@ -87,7 +88,7 @@ function AdminDashboard() {
 
   const startEdit = (car) => {
     setEditingCar(car.id);
-    setCarForm({ name: car.name, type: car.type, pricePerKm: car.pricePerKm });
+    setCarForm({ name: car.name, type: car.type, pricePerKm: car.pricePerKm, imageUrl: car.imageUrl || "" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -175,6 +176,7 @@ function AdminDashboard() {
               <form onSubmit={saveCar} className="mt-6 space-y-4">
                 <label className="block"><span className="mb-2 block text-sm font-semibold">Car name</span><input name="name" value={carForm.name} onChange={(e) => setCarForm({ ...carForm, name: e.target.value })} placeholder="e.g. Toyota Camry" className={inputClass} required /></label>
                 <label className="block"><span className="mb-2 block text-sm font-semibold">Vehicle type</span><input name="type" value={carForm.type} onChange={(e) => setCarForm({ ...carForm, type: e.target.value })} placeholder="e.g. Sedan" className={inputClass} required /></label>
+                <label className="block"><span className="mb-2 block text-sm font-semibold">Car image URL</span><input name="imageUrl" type="url" value={carForm.imageUrl} onChange={(e) => setCarForm({ ...carForm, imageUrl: e.target.value })} placeholder="https://example.com/car.jpg" className={inputClass} /><span className="mt-1.5 block text-xs text-slate-400">Paste a direct image link. A fallback is used when empty.</span></label>
                 <label className="block"><span className="mb-2 block text-sm font-semibold">Price per kilometer</span><div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span><input name="pricePerKm" type="number" min="0.01" step="0.01" value={carForm.pricePerKm} onChange={(e) => setCarForm({ ...carForm, pricePerKm: e.target.value })} placeholder="0.00" className={inputClass + " pl-8"} required /></div></label>
                 <button disabled={savingCar} className="w-full rounded-xl bg-blue-600 py-3.5 font-bold text-white shadow-lg shadow-blue-600/20 disabled:opacity-60">{savingCar ? "Saving..." : editingCar ? "Save changes" : "Add to fleet"}</button>
                 {editingCar && <button type="button" onClick={() => { setEditingCar(null); setCarForm(emptyCar); }} className="w-full rounded-xl border border-slate-200 py-3 text-sm font-semibold">Cancel editing</button>}
@@ -183,7 +185,7 @@ function AdminDashboard() {
 
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_40px_rgba(15,23,42,.06)]">
               <div className="flex flex-col justify-between gap-3 border-b border-slate-100 p-6 sm:flex-row sm:items-center"><div><h2 className="text-xl font-bold">Fleet inventory</h2><p className="mt-1 text-sm text-slate-500">{visibleCars.length} vehicles</p></div><input value={carSearch} onChange={(e) => setCarSearch(e.target.value)} placeholder="Search fleet..." className={inputClass + " sm:max-w-xs"} /></div>
-              <div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left"><thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500"><tr><th className="px-6 py-4">Vehicle</th><th className="px-6 py-4">Type</th><th className="px-6 py-4">Rate</th><th className="px-6 py-4 text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-100">{visibleCars.map((car) => <tr key={car.id} className="hover:bg-slate-50"><td className="px-6 py-5"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-slate-900 text-xs font-black text-white">CB</span><div><p className="font-bold">{car.name}</p><p className="text-xs text-slate-400">ID #{car.id}</p></div></div></td><td className="px-6 py-5 text-sm text-slate-600">{car.type}</td><td className="px-6 py-5 font-bold">{"$" + Number(car.pricePerKm).toFixed(2)}<span className="text-xs font-normal text-slate-400"> / km</span></td><td className="px-6 py-5 text-right"><button onClick={() => startEdit(car)} className="mr-2 rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">Edit</button><button onClick={() => deleteCar(car)} className="rounded-lg bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700">Delete</button></td></tr>)}</tbody></table></div>
+              <div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left"><thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500"><tr><th className="px-6 py-4">Vehicle</th><th className="px-6 py-4">Type</th><th className="px-6 py-4">Rate</th><th className="px-6 py-4 text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-100">{visibleCars.map((car) => <tr key={car.id} className="hover:bg-slate-50"><td className="px-6 py-5"><div className="flex items-center gap-3"><img src={car.imageUrl || fallbackCarImage} onError={(event) => { event.currentTarget.src = fallbackCarImage; }} alt={car.name} className="h-12 w-16 rounded-xl object-cover" /><div><p className="font-bold">{car.name}</p><p className="text-xs text-slate-400">ID #{car.id}</p></div></div></td><td className="px-6 py-5 text-sm text-slate-600">{car.type}</td><td className="px-6 py-5 font-bold">{"$" + Number(car.pricePerKm).toFixed(2)}<span className="text-xs font-normal text-slate-400"> / km</span></td><td className="px-6 py-5 text-right"><button onClick={() => startEdit(car)} className="mr-2 rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">Edit</button><button onClick={() => deleteCar(car)} className="rounded-lg bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700">Delete</button></td></tr>)}</tbody></table></div>
             </div>
           </section>
         )}
