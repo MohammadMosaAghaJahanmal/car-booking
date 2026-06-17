@@ -6,7 +6,7 @@ const { bookingSchema, bookingStatusSchema, bookingQuerySchema } = require("../v
 
 const router = express.Router();
 router.post("/", protect, validate(bookingSchema), createBooking);
-router.get("/my-bookings", protect, getMyBookings);
+router.get("/my-bookings", protect, validate(bookingQuerySchema, "query"), getMyBookings);
 router.get("/all", protect, adminOnly, validate(bookingQuerySchema, "query"), getAllBookings);
 router.put("/:id/status", protect, adminOnly, validate(bookingStatusSchema), updateBookingStatus);
 router.put("/:id/cancel", protect, cancelMyBooking);

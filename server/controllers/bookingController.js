@@ -22,8 +22,32 @@ const createBooking = async (req, res) => {
 
 const getMyBookings = async (req, res) => {
   try {
+    const { search, status, paymentStatus, carId, dateFrom, dateTo, sortBy, sortOrder } = req.validated.query;
+    const where = { UserId: req.user.id };
+
+    if (status) where.status = status;
+    if (paymentStatus) where.paymentStatus = paymentStatus;
+    if (carId) where.CarId = carId;
+    if (dateFrom || dateTo) {
+      where.travelDate = {};
+      if (dateFrom) where.travelDate[Op.gte] = dateFrom;
+      if (dateTo) where.travelDate[Op.lte] = dateTo;
+    }
+    if (search) {
+      const like = "%" + search + "%";
+      where[Op.or] = [
+        { pickupAddress: { [Op.like]: like } },
+        { dropAddress: { [Op.like]: like } },
+        { "$Car.name$": { [Op.like]: like } },
+      ];
+      if (/^\d+$/.test(search)) where[Op.or].push({ id: Number(search) });
+    }
+
     const bookings = await Booking.findAll({
-      where: { UserId: req.user.id }, include: [Car], order: [["createdAt", "DESC"]],
+      where,
+      include: [{ model: Car, attributes: ["id", "name", "type", "pricePerKm"] }],
+      subQuery: false,
+      order: [[sortBy, sortOrder.toUpperCase()]],
     });
     res.json(bookings);
   } catch (error) {

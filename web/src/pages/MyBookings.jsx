@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import API from "../api/axios";
 
 const filters = ["all", "pending", "accepted", "completed", "cancelled"];
+const emptyQuery = { search: "", paymentStatus: "", carId: "", dateFrom: "", dateTo: "", sortBy: "createdAt", sortOrder: "DESC" };
 const badge = { pending: "bg-amber-50 text-amber-700", accepted: "bg-blue-50 text-blue-700", completed: "bg-emerald-50 text-emerald-700", cancelled: "bg-rose-50 text-rose-700" };
 
 function MyBookings() {
@@ -11,18 +12,31 @@ function MyBookings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancelling, setCancelling] = useState(null);
+  const [query, setQuery] = useState(emptyQuery);
+  const [cars, setCars] = useState([]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
+      setLoading(true);
       setError("");
-      const res = await API.get("/bookings/my-bookings");
+      const res = await API.get("/bookings/my-bookings", { params: query });
       setBookings(res.data);
     } catch (err) {
       setError(err.response?.data?.message || "We could not load your bookings.");
     } finally { setLoading(false); }
-  };
+  }, [query]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const timer = setTimeout(load, query.search ? 350 : 0);
+    return () => clearTimeout(timer);
+  }, [load, query.search]);
+
+  useEffect(() => {
+    API.get("/cars").then((res) => setCars(res.data)).catch(() => {});
+  }, []);
+
+  const updateQuery = (field, value) => setQuery((current) => ({ ...current, [field]: value }));
+  const resetHistoryFilters = () => { setQuery(emptyQuery); setFilter("all"); };
 
   const cancelBooking = async (id) => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
@@ -55,6 +69,36 @@ function MyBookings() {
             <div key={label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.07)]"><p className="text-sm font-medium text-slate-500">{label}</p><p className="mt-1 text-2xl font-bold">{value}</p></div>
           ))}
         </div>
+
+        <section className="mt-7 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,.05)]">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">Ride history</p><h2 className="mt-1 text-xl font-bold">Find a previous ride</h2></div>
+            <button onClick={resetHistoryFilters} className="w-fit rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50">Reset filters</button>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+            <div className="relative sm:col-span-2">
+              <input value={query.search} onChange={(event) => updateQuery("search", event.target.value)} placeholder="Search booking ID, car or route..." className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pl-10 text-sm outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10" />
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">Q</span>
+            </div>
+            <select value={query.carId} onChange={(event) => updateQuery("carId", event.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm outline-none focus:border-blue-500">
+              <option value="">All cars</option>{cars.map((car) => <option key={car.id} value={car.id}>{car.name}</option>)}
+            </select>
+            <select value={query.paymentStatus} onChange={(event) => updateQuery("paymentStatus", event.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm outline-none focus:border-blue-500">
+              <option value="">All payments</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option><option value="refunded">Refunded</option>
+            </select>
+            <input type="date" title="From date" value={query.dateFrom} onChange={(event) => updateQuery("dateFrom", event.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm outline-none focus:border-blue-500" />
+            <input type="date" title="To date" value={query.dateTo} onChange={(event) => updateQuery("dateTo", event.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm outline-none focus:border-blue-500" />
+          </div>
+          <div className="mt-3 flex justify-end">
+            <select value={query.sortBy + ":" + query.sortOrder} onChange={(event) => { const [sortBy, sortOrder] = event.target.value.split(":"); setQuery((current) => ({ ...current, sortBy, sortOrder })); }} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-600">
+              <option value="createdAt:DESC">Recently booked</option>
+              <option value="travelDate:DESC">Newest travel date</option>
+              <option value="travelDate:ASC">Oldest travel date</option>
+              <option value="totalPrice:DESC">Highest price</option>
+              <option value="totalPrice:ASC">Lowest price</option>
+            </select>
+          </div>
+        </section>
 
         <div className="my-7 flex gap-2 overflow-x-auto pb-2">
           {filters.map((item) => <button key={item} onClick={() => setFilter(item)} className={"whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold capitalize " + (filter === item ? "bg-slate-900 text-white shadow" : "border border-slate-200 bg-white text-slate-600")}>{item} <span className="ml-1 text-xs opacity-60">{item === "all" ? bookings.length : count(item)}</span></button>)}
