@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const http = require("http");
+const { Server } = require("socket.io");
 require("dotenv").config();
 
 const sequelize = require("./config/db");
@@ -8,43 +10,35 @@ const authRoutes = require("./routes/authRoutes");
 const carRoutes = require("./routes/carRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const trackingRoutes = require("./routes/trackingRoutes");
+const setupTrackingSocket = require("./socket/trackingSocket");
 const { protect } = require("./middleware/authMiddleware");
 
 const app = express();
-app.use(cors());
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: process.env.WEB_URL || "http://localhost:3000", methods: ["GET", "POST"] } });
+setupTrackingSocket(io);
+app.set("io", io);
+
+app.use(cors({ origin: process.env.WEB_URL || "http://localhost:3000" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
 app.use("/api/auth", authRoutes);
 app.use("/api/cars", carRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
-
-app.get("/api/profile", protect, (req, res) => {
-  res.json({ message: "Protected profile route", user: req.user });
-});
-
-app.get("/", (req, res) => {
-  res.send("Car Booking Backend API is running...");
-});
-
-app.use((req, res) => {
-  res.status(404).json({ message: "Route not found" });
-});
+app.use("/api/tracking", trackingRoutes);
+app.get("/api/profile", protect, (req, res) => res.json({ message: "Protected profile route", user: req.user }));
+app.get("/", (req, res) => res.send("Car Booking Backend API is running..."));
+app.use((req, res) => res.status(404).json({ message: "Route not found" }));
 
 const PORT = process.env.PORT || 5000;
-
 sequelize.authenticate()
   .then(async () => {
     console.log("MySQL connected successfully");
-    // Use migrations for schema changes. alter:true can create duplicate
-    // unique indexes in MySQL each time the server restarts.
     await sequelize.sync();
     console.log("Tables synced");
-
-    app.listen(PORT, () => {
-      console.log("Server running on port " + PORT);
-    });
+    server.listen(PORT, () => console.log("Server running on port " + PORT));
   })
   .catch((error) => {
     console.error("Server startup failed:", error);

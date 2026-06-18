@@ -79,6 +79,7 @@ function MyBookings() {
                 {booking.status === "pending" && <button onClick={() => cancelBooking(booking.id)} disabled={cancelling === booking.id} className="rounded-xl border bg-white px-5 py-2.5 text-sm font-semibold hover:text-rose-600 disabled:opacity-60">{cancelling === booking.id ? "Cancelling..." : "Cancel booking"}</button>}
                 {booking.paymentStatus === "unpaid" && booking.status !== "cancelled" && <Link to={"/payment/" + booking.id} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white">Pay now &rarr;</Link>}
               </footer>}
+              {booking.status === "accepted" && <div className="border-t border-slate-100 px-5 py-4 text-right sm:px-7"><Link to={"/track/" + booking.id} className="inline-flex rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700">Track driver live</Link></div>}
             </article>
           ))}
           {shown.length === 0 && !error && <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center"><h2 className="text-lg font-bold">No {filter === "all" ? "" : filter} bookings yet</h2><p className="mt-2 text-sm text-slate-500">Your rides will appear here after you make a booking.</p><Link to="/" className="mt-5 inline-block rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white">Book a ride</Link></div>}

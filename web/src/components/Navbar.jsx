@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { disconnectSocket } from "../socket";
 
 const navClass = ({ isActive }) =>
   "relative rounded-lg px-3 py-2 text-sm font-semibold transition " +
@@ -12,6 +13,7 @@ function Navbar() {
   const initial = user?.name?.charAt(0)?.toUpperCase() || "U";
 
   const logout = () => {
+    disconnectSocket();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setMenuOpen(false);
@@ -36,6 +38,7 @@ function Navbar() {
           <NavLink to="/" className={navClass}>Home</NavLink>
           {user && <NavLink to="/my-bookings" className={navClass}>My Bookings</NavLink>}
           {user?.role === "admin" && <NavLink to="/admin" className={navClass}>Admin</NavLink>}
+          {user?.role === "driver" && <NavLink to="/driver" className={navClass}>Driver Console</NavLink>}
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
@@ -75,6 +78,7 @@ function Navbar() {
             <NavLink to="/" onClick={() => setMenuOpen(false)} className={navClass}>Home</NavLink>
             {user && <NavLink to="/my-bookings" onClick={() => setMenuOpen(false)} className={navClass}>My Bookings</NavLink>}
             {user?.role === "admin" && <NavLink to="/admin" onClick={() => setMenuOpen(false)} className={navClass}>Admin Dashboard</NavLink>}
+            {user?.role === "driver" && <NavLink to="/driver" onClick={() => setMenuOpen(false)} className={navClass}>Driver Console</NavLink>}
             <div className="my-3 border-t border-white/10" />
             {user ? (
               <div className="flex items-center justify-between gap-4">

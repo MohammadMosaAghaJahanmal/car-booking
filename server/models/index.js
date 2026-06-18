@@ -1,11 +1,13 @@
 const User = require("./User");
 const Car = require("./Car");
 const Booking = require("./Booking");
-
+const RideTracking = require("./RideTracking");
 User.hasMany(Booking);
 Booking.belongsTo(User);
-
 Car.hasMany(Booking);
 Booking.belongsTo(Car);
-
-module.exports = { User, Car, Booking };
+Booking.hasOne(RideTracking, { onDelete: "CASCADE" });
+RideTracking.belongsTo(Booking);
+User.hasMany(RideTracking, { foreignKey: "DriverId", as: "DriverTrackings" });
+RideTracking.belongsTo(User, { foreignKey: "DriverId", as: "Driver", onDelete: "RESTRICT" });
+module.exports = { User, Car, Booking, RideTracking };

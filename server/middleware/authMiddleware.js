@@ -41,4 +41,9 @@ const adminOnly = (req, res, next) => {
   }
 };
 
-module.exports = { protect, adminOnly };
+const driverOnly = (req, res, next) => {
+  if (req.user && req.user.role === "driver") return next();
+  res.status(403).json({ message: "Driver only" });
+};
+
+module.exports = { protect, adminOnly, driverOnly };
