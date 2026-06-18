@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import API from "../api/axios";
 import { carSchema } from "../validation/schemas";
+import BookingCalendar from "../components/BookingCalendar";
 
 const emptyCar = { name: "", type: "", pricePerKm: "" };
 const badge = {
@@ -112,7 +113,7 @@ function AdminDashboard() {
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-6 md:flex-row md:items-end">
           <div><p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-400">Control center</p><h1 className="mt-3 text-4xl font-bold tracking-tight">Admin Dashboard</h1><p className="mt-3 text-slate-400">Manage every booking and vehicle from one place.</p></div>
           <div className="flex rounded-xl border border-white/10 bg-white/5 p-1">
-            {["bookings", "cars"].map((item) => <button key={item} onClick={() => setSection(item)} className={"rounded-lg px-5 py-2.5 text-sm font-semibold capitalize transition " + (section === item ? "bg-white text-slate-950 shadow" : "text-slate-400 hover:text-white")}>{item}</button>)}
+            {["bookings", "calendar", "cars"].map((item) => <button key={item} onClick={() => setSection(item)} className={"rounded-lg px-5 py-2.5 text-sm font-semibold capitalize transition " + (section === item ? "bg-white text-slate-950 shadow" : "text-slate-400 hover:text-white")}>{item}</button>)}
           </div>
         </div>
       </section>
@@ -165,6 +166,8 @@ function AdminDashboard() {
               <div className="flex items-center gap-3"><button disabled={pagination.page <= 1} onClick={() => changeFilter("page", pagination.page - 1)} className="rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-40">Previous</button><span className="text-sm text-slate-500">Page {pagination.page} of {pagination.pages}</span><button disabled={pagination.page >= pagination.pages} onClick={() => changeFilter("page", pagination.page + 1)} className="rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-40">Next</button></div>
             </div>
           </section>
+        ) : section === "calendar" ? (
+          <BookingCalendar cars={cars} />
         ) : (
           <section className="mt-7 grid gap-7 lg:grid-cols-[.72fr_1.28fr]">
             <div className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_12px_40px_rgba(15,23,42,.06)]">
