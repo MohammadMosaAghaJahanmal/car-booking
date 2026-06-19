@@ -1,0 +1,27 @@
+import { z } from "zod";
+
+export const loginSchema = z.object({
+  email: z.email("Enter a valid email address"),
+  password: z.string().min(1, "Password is required").max(72),
+});
+
+export const registerSchema = z.object({
+  name: z.string().trim().min(2, "Name must contain at least 2 characters").max(100),
+  email: z.email("Enter a valid email address"),
+  password: z.string().min(6, "Password must contain at least 6 characters").max(72),
+});
+
+export const carSchema = z.object({
+  name: z.string().trim().min(2, "Car name must contain at least 2 characters").max(100),
+  type: z.string().trim().min(2, "Vehicle type must contain at least 2 characters").max(60),
+  pricePerKm: z.coerce.number().positive("Price per km must be greater than zero").max(100000),
+});
+
+export const bookingSchema = z.object({
+  carId: z.coerce.number().int().positive("Select a car"),
+  pickupAddress: z.string().trim().min(3, "Select a pickup location"),
+  dropAddress: z.string().trim().min(3, "Select a destination"),
+  distanceKm: z.coerce.number().positive("Distance must be greater than zero"),
+  travelDate: z.string().min(1, "Select a travel date"),
+  travelTime: z.string().min(1, "Select a pickup time"),
+});

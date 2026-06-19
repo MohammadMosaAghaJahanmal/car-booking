@@ -1,42 +1,45 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import API from "../api/axios";
 import AuthShell from "../components/AuthShell";
+import { registerSchema } from "../validation/schemas";
 
 const fieldClass = "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10";
+const FieldError = ({ error }) => error ? <p className="mt-1.5 text-xs font-medium text-rose-600">{error.message}</p> : null;
 
 function Register() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { name: "", email: "", password: "" },
+  });
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  const onSubmit = async (form) => {
     try {
       await API.post("/auth/register", form);
       navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed. Please try again.");
-    } finally { setLoading(false); }
+      const fields = err.response?.data?.fieldErrors;
+      if (fields) Object.entries(fields).forEach(([field, message]) => setError(field, { message }));
+      else setError("root.server", { message: err.response?.data?.message || "Registration failed. Please try again." });
+    }
   };
 
   return (
     <AuthShell eyebrow="Join CarBooking" title="Create your account" description="A few details are all it takes to start booking better rides." footer={<>Already have an account? <Link to="/login" className="font-bold text-blue-600 hover:text-blue-700">Sign in</Link></>}>
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Full name</span><input name="name" value={form.name} placeholder="Your full name" onChange={handleChange} className={fieldClass} autoComplete="name" required /></label>
-        <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Email address</span><input name="email" type="email" value={form.email} placeholder="you@example.com" onChange={handleChange} className={fieldClass} autoComplete="email" required /></label>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+        <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Full name</span><input {...register("name")} placeholder="Your full name" className={fieldClass} autoComplete="name" /><FieldError error={errors.name} /></label>
+        <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Email address</span><input {...register("email")} type="email" placeholder="you@example.com" className={fieldClass} autoComplete="email" /><FieldError error={errors.email} /></label>
         <label className="block">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-slate-700"><span>Password</span><span className="text-xs font-medium text-slate-400">Minimum 6 characters</span></span>
-          <div className="relative"><input name="password" type={showPassword ? "text" : "password"} value={form.password} placeholder="Create a secure password" onChange={handleChange} className={fieldClass + " pr-20"} autoComplete="new-password" minLength="6" required /><button type="button" onClick={() => setShowPassword((show) => !show)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs font-bold text-slate-500 hover:bg-slate-200">{showPassword ? "Hide" : "Show"}</button></div>
+          <div className="relative"><input {...register("password")} type={showPassword ? "text" : "password"} placeholder="Create a secure password" className={fieldClass + " pr-20"} autoComplete="new-password" /><button type="button" onClick={() => setShowPassword((show) => !show)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs font-bold text-slate-500 hover:bg-slate-200">{showPassword ? "Hide" : "Show"}</button></div>
+          <FieldError error={errors.password} />
         </label>
-        {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{error}</div>}
-        <button disabled={loading} className="w-full rounded-xl bg-blue-600 py-4 font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">{loading ? "Creating your account..." : "Create account!"}</button>
+        {errors.root?.server && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{errors.root.server.message}</div>}
+        <button disabled={isSubmitting} className="w-full rounded-xl bg-blue-600 py-4 font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">{isSubmitting ? "Creating your account..." : "Create account >"}</button>
       </form>
     </AuthShell>
   );

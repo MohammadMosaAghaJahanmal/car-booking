@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import API from "../api/axios";
 import BookingMap from "../components/BookingMap";
 import PlaceInput from "../components/PlaceInput";
+import { bookingSchema } from "../validation/schemas";
 function Home() {
   const [selecting, setSelecting] = useState("pickup");
 
@@ -37,6 +38,12 @@ const [form, setForm] = useState({...initState});
 
   const createBooking = async (e) => {
     e.preventDefault();
+
+    const validation = bookingSchema.safeParse(form);
+    if (!validation.success) {
+      alert(validation.error.issues[0].message);
+      return;
+    }
 
     await API.post("/bookings", {
       carId: form.carId,

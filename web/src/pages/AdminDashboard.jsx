@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import API from "../api/axios";
+import { carSchema } from "../validation/schemas";
 
 const emptyCar = { name: "", type: "", pricePerKm: "" };
 const badge = {
@@ -66,7 +67,12 @@ function AdminDashboard() {
     e.preventDefault();
     try {
       setSavingCar(true);
-      const payload = { ...carForm, pricePerKm: Number(carForm.pricePerKm) };
+      const validation = carSchema.safeParse(carForm);
+      if (!validation.success) {
+        setNotice({ type: "error", text: validation.error.issues[0].message });
+        return;
+      }
+      const payload = validation.data;
       if (editingCar) await API.put("/cars/" + editingCar, payload);
       else await API.post("/cars", payload);
       setNotice({ type: "success", text: editingCar ? "Car updated successfully." : "New car added successfully." });

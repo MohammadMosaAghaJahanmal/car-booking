@@ -3,18 +3,11 @@ const { Booking, Car, User } = require("../models");
 const Stripe = require("stripe");
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-const BOOKING_STATUSES = ["pending", "accepted", "completed", "cancelled"];
-const PAYMENT_STATUSES = ["unpaid", "paid", "refunded"];
-const SORT_FIELDS = ["createdAt", "travelDate", "totalPrice", "status"];
-
 const createBooking = async (req, res) => {
   try {
     const { carId, pickupAddress, pickupLat, pickupLng, dropAddress, dropLat, dropLng, distanceKm, travelDate, travelTime } = req.body;
     const car = await Car.findByPk(carId);
     if (!car) return res.status(404).json({ message: "Car not found" });
-    if (!pickupAddress || !dropAddress || !travelDate || !travelTime || Number(distanceKm) <= 0) {
-      return res.status(400).json({ message: "Complete route, distance, date, and time are required" });
-    }
 
     const booking = await Booking.create({
       UserId: req.user.id, CarId: carId, pickupAddress, dropAddress,
@@ -44,22 +37,16 @@ const getAllBookings = async (req, res) => {
       search = "", status = "", paymentStatus = "", carId = "",
       dateFrom = "", dateTo = "", page = "1", limit = "10",
       sortBy = "createdAt", sortOrder = "DESC",
-    } = req.query;
+    } = req.validated.query;
 
-    const safePage = Math.max(1, Number.parseInt(page, 10) || 1);
-    const safeLimit = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 10));
-    const safeSort = SORT_FIELDS.includes(sortBy) ? sortBy : "createdAt";
-    const safeOrder = String(sortOrder).toUpperCase() === "ASC" ? "ASC" : "DESC";
+    const safePage = page;
+    const safeLimit = limit;
+    const safeSort = sortBy;
+    const safeOrder = sortOrder.toUpperCase();
     const bookingWhere = {};
 
-    if (status) {
-      if (!BOOKING_STATUSES.includes(status)) return res.status(400).json({ message: "Invalid booking status filter" });
-      bookingWhere.status = status;
-    }
-    if (paymentStatus) {
-      if (!PAYMENT_STATUSES.includes(paymentStatus)) return res.status(400).json({ message: "Invalid payment status filter" });
-      bookingWhere.paymentStatus = paymentStatus;
-    }
+    if (status) bookingWhere.status = status;
+    if (paymentStatus) bookingWhere.paymentStatus = paymentStatus;
     if (carId) bookingWhere.CarId = Number(carId);
     if (dateFrom || dateTo) {
       bookingWhere.travelDate = {};
@@ -114,8 +101,6 @@ const getAllBookings = async (req, res) => {
 const updateBookingStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    if (!BOOKING_STATUSES.includes(status)) return res.status(400).json({ message: "Invalid booking status" });
-
     const booking = await Booking.findByPk(req.params.id);
     if (!booking) return res.status(404).json({ message: "Booking not found" });
 
