@@ -1,4 +1,4 @@
-# Car Booking System (Learning Project)
+# Car Booking System
 
 A full-stack Car Booking System built for learning purposes using **MERN-style architecture with MySQL instead of MongoDB**.
 
@@ -263,4 +263,4 @@ This project was built to learn:
 
 # Author
 
-Mohammad Sarwar Agha
+Jahanmal Agha
