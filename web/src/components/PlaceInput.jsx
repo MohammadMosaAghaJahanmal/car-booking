@@ -41,7 +41,7 @@ function PlaceInput({ label, name, latName, lngName, form, setForm, required }) 
           [name]: e.target.value,
         }))
       }
-      className="w-full border p-3 rounded-lg"
+      className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3.5 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
       required={required}
     />
   );
