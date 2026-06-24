@@ -6,6 +6,7 @@ CarBooking is a full-stack ride-booking platform for customers, administrators, 
 
 ### Customers
 - JWT registration and login
+- Secure email password reset with hashed, single-use, 15-minute tokens
 - Google Places pickup and destination search
 - Interactive maps, current location, automatic distance and fare calculations
 - Scheduled rides and car selection with images
@@ -83,6 +84,12 @@ Create `server/.env`:
     DB_DIALECT=mysql
     JWT_SECRET=replace_with_a_long_random_secret
     STRIPE_SECRET_KEY=sk_test_your_secret_key
+    SMTP_HOST=smtp.example.com
+    SMTP_PORT=587
+    SMTP_SECURE=false
+    SMTP_USER=your_smtp_user
+    SMTP_PASSWORD=your_smtp_password
+    MAIL_FROM=CarBooking <no-reply@example.com>
 
 Create `web/.env`:
 
@@ -148,6 +155,7 @@ Open `http://localhost:3000`. The API uses `http://localhost:5000`.
 - **RideTracking:** driver, position, movement data, sharing state, and last seen.
 - **Notification:** persistent message, link, metadata, and read time.
 - **SiteSetting:** key-value configuration such as the homepage hero.
+- **PasswordResetToken:** hashed, expiring, single-use password reset request.
 
 Booking states: `pending`, `accepted`, `completed`, `cancelled`.
 Payment states: `unpaid`, `paid`, `refunded`.
@@ -159,6 +167,7 @@ Protected routes require `Authorization: Bearer <jwt>`.
 | Area | Method and endpoint | Access |
 | --- | --- | --- |
 | Auth | `POST /api/auth/register`, `POST /api/auth/login` | Public |
+| Password reset | `POST /api/auth/forgot-password`, `POST /api/auth/reset-password` | Public |
 | Cars | `GET /api/cars` | Public |
 | Cars | `POST /api/cars`, `PUT /api/cars/:id`, `DELETE /api/cars/:id` | Admin |
 | Uploads | `POST /api/uploads/image` | Admin |
@@ -178,6 +187,16 @@ Protected routes require `Authorization: Bearer <jwt>`.
 Car and booking list endpoints support search, filters, sorting, and pagination. Uploads use multipart field `image`; JPG, PNG, and WebP are accepted up to 5 MB.
 
 Socket events include `join-booking`, `driver-location`, `driver-offline`, and `stop-sharing`.
+
+## Password reset flow
+
+1. A user submits an email address and always receives the same generic response.
+2. The server creates a random token, stores only its SHA-256 hash, and sets a 15-minute expiry.
+3. Nodemailer sends the reset URL through SMTP.
+4. The reset page validates and submits the new password.
+5. The server consumes every active reset token for the account after updating the password.
+
+When SMTP is absent outside production, the API logs and returns a development-only reset URL. Production requires SMTP configuration.
 
 ## Secure payment flow
 
@@ -213,6 +232,10 @@ Repeated `sync({ alter: true })` can create duplicate indexes. This project uses
 
 ### Hero image remains old
 Inspect `/api/settings/home` and confirm its `/uploads/...` URL works. Settings disable caching and refresh when the window regains focus.
+
+### Password reset email does not arrive
+
+Check the SMTP host, port, secure mode, credentials, sender address, spam folder, and server logs. Restart the API after changing environment variables.
 
 ### Payment initialization fails
 Confirm Stripe keys use test mode, the booking belongs to the signed-in user, and it is neither paid nor cancelled. Safe messages appear in the UI while diagnostics remain in server logs.

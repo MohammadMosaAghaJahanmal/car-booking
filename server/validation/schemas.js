@@ -17,6 +17,15 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required").max(72),
 }).strict();
 
+const forgotPasswordSchema = z.object({
+  email: z.email("Enter a valid email address").transform((value) => value.toLowerCase()),
+}).strict();
+
+const resetPasswordSchema = z.object({
+  token: z.string().length(64, "Invalid reset token").regex(/^[a-f0-9]+$/i, "Invalid reset token"),
+  password: z.string().min(8, "Password must contain at least 8 characters").max(72),
+}).strict();
+
 const carSchema = z.object({
   name: z.string().trim().min(2, "Car name must contain at least 2 characters").max(100),
   type: z.string().trim().min(2, "Vehicle type must contain at least 2 characters").max(60),
@@ -79,7 +88,7 @@ const markPaidSchema = z.object({
 }).strict();
 
 module.exports = {
-  registerSchema, loginSchema, carSchema, updateCarSchema, bookingSchema,
+  registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, carSchema, updateCarSchema, bookingSchema,
   bookingStatusSchema, bookingQuerySchema, carQuerySchema,
   paymentIntentSchema, markPaidSchema, heroSettingSchema,
 };
