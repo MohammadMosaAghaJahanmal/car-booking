@@ -1,5 +1,6 @@
 import { Redirect, Tabs } from "expo-router";
-import { Text, View } from "react-native";
+import { Text, View, useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ColorValue } from "react-native";
 import { useAuth } from "@/context/auth";
 import { C } from "@/constants/app-theme";
@@ -31,12 +32,15 @@ const TabIcon = ({
 
 export default function TabLayout() {
   const { user, ready } = useAuth();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const compact = width < 360;
   if (!ready) return null;
   if (!user) return <Redirect href="/login" />;
   const customer = user.role === "user";
   const workspace =
     user.role === "admin"
-      ? "Business"
+      ? (compact ? "Admin" : "Business")
       : user.role === "driver"
         ? "Driver"
         : "Dashboard";
@@ -48,13 +52,14 @@ export default function TabLayout() {
         tabBarInactiveTintColor: "#94a3b8",
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          height: 72,
-          paddingTop: 8,
-          paddingBottom: 10,
+          height: 60 + Math.max(insets.bottom, 8),
+          paddingTop: 6,
+          paddingBottom: Math.max(insets.bottom, 8),
           borderTopColor: C.line,
           backgroundColor: "#fff",
         },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "800" },
+        tabBarLabelStyle: { fontSize: compact ? 8 : 10, fontWeight: "800" },
+        tabBarItemStyle: { minWidth: 54, paddingHorizontal: 2 },
       }}
     >
       <Tabs.Screen

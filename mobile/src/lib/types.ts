@@ -5,7 +5,7 @@ export type Booking = {
  id:number; UserId:number; CarId:number; pickupAddress:string; dropAddress:string;
  pickupLat?:number|null; pickupLng?:number|null; dropLat?:number|null; dropLng?:number|null;
  distanceKm:number; totalPrice:number; travelDate:string; travelTime:string;
- status:'pending'|'accepted'|'completed'|'cancelled'; paymentStatus:'unpaid'|'paid'|'refunded';
+ status:'pending'|'accepted'|'completed'|'cancelled'; paymentStatus:'unpaid'|'paid'|'refunded'; createdAt?:string; updatedAt?:string;
  Car?:Car; User?:User; RideTracking?:RideTracking;
 };
 export type RideTracking = { id:number; BookingId:number; DriverId:number; latitude?:number|null; longitude?:number|null; accuracy?:number|null; heading?:number|null; speed?:number|null; isSharing:boolean; lastSeen?:string|null; Driver?:Pick<User,'id'|'name'> };
