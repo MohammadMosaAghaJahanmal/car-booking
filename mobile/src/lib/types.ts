@@ -1,0 +1,12 @@
+export type Role = 'user' | 'admin' | 'driver';
+export type User = { id:number; name:string; email:string; role:Role };
+export type Car = { id:number; name:string; type:string; imageUrl?:string|null; pricePerKm:number };
+export type Booking = {
+ id:number; UserId:number; CarId:number; pickupAddress:string; dropAddress:string;
+ pickupLat?:number|null; pickupLng?:number|null; dropLat?:number|null; dropLng?:number|null;
+ distanceKm:number; totalPrice:number; travelDate:string; travelTime:string;
+ status:'pending'|'accepted'|'completed'|'cancelled'; paymentStatus:'unpaid'|'paid'|'refunded';
+ Car?:Car; User?:User; RideTracking?:RideTracking;
+};
+export type RideTracking = { id:number; BookingId:number; DriverId:number; latitude?:number|null; longitude?:number|null; accuracy?:number|null; heading?:number|null; speed?:number|null; isSharing:boolean; lastSeen?:string|null; Driver?:Pick<User,'id'|'name'> };
+export type Notification = { id:number; type:string; title:string; message:string; link?:string|null; readAt?:string|null; createdAt:string };

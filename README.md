@@ -121,6 +121,10 @@ Optional development data:
 
 Seed accounts are for local development only.
 
+## Mobile application
+
+The Expo SDK 56 app in mobile provides customer booking and payments, notifications, tracking, profile/password recovery, driver live location, and admin fleet/booking tools. Configure EXPO_PUBLIC_API_URL with the computer LAN address for physical devices and EXPO_PUBLIC_STRIPE_KEY with the Stripe publishable test key. See mobile/README.md for native setup and permissions.
+
 ## Running locally
 
 Terminal one:
