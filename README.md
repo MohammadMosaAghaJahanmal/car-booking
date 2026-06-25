@@ -1,80 +1,107 @@
 # CarBooking
 
-CarBooking is a full-stack ride-booking platform for customers, administrators, and drivers. It includes route planning, scheduled rides, Stripe payments, live tracking, fleet management, uploads, and notifications.
+CarBooking is a full-stack car and ride-booking platform for customers, drivers, and administrators. It includes a React web app, an Expo mobile app, and a Node/Express API with MySQL, Stripe payments, Google Maps/Places, image uploads, live tracking, notifications, and role-based control panels.
 
-## Features
+## Main features
 
-### Customers
-- JWT registration and login
-- Secure email password reset with hashed, single-use, 15-minute tokens
-- Self-service display-name and password updates
-- Google Places pickup and destination search
-- Interactive maps, current location, automatic distance and fare calculations
-- Scheduled rides and car selection with images
-- Stripe checkout with polished loading, validation, success, and error states
-- Cancellation and eligible refunds
-- Live driver tracking, ride-history filters, and real-time notifications
+### Customer experience
 
-### Administrators
-- Booking summaries, search, filters, pagination, and calendar
-- Booking status and fleet management
-- Car and homepage hero images through URL or file upload
-- Admin-only JPG, PNG, and WebP uploads with previews and a 5 MB limit
+- Register, login, logout, forgot password, and reset password
+- Update profile name and change account password
+- Beautiful web and mobile home screens with hero banner support
+- Pickup and drop-off autocomplete through Google Places
+- Current-location pickup support
+- Automatic distance and fare calculation after pickup/drop-off selection
+- Date/time scheduling with mobile date picker support
+- Car selection with customer-visible car images
+- Booking confirmation, empty form reset after successful booking, and polished alerts
+- Stripe payments on web and mobile
+- Dark native Stripe Payment Sheet on mobile
+- My bookings/dashboard screens with booking, payment, and ride status
+- Ride history filters and notifications
+- Live driver location and ride tracking
 
-### Drivers
-- Driver console, available rides, claiming, and assignment notifications
-- Live browser geolocation sharing and offline updates
+### Admin experience
 
-## Technology
+- Admin dashboard/control panel for business management
+- Booking table/cards with search, filtering, pagination, and summaries
+- Paid, unpaid, and refunded payment status visible on admin booking cards
+- Booking travel time and booking creation time visible to admins
+- Manage booking status: pending, accepted, completed, cancelled
+- Manage fleet cars from web and mobile
+- Create, edit, and delete cars
+- Car image support by URL or file upload
+- Homepage hero banner support by URL or file upload
+- Upload validation for JPG, PNG, and WebP images up to 5 MB
+
+### Driver experience
+
+- Driver workspace/control panel
+- View available accepted rides
+- Claim assigned work
+- Share live foreground location
+- Stop sharing location
+- Complete rides
+- Driver, customer, and admin notifications through Socket.IO
+
+## Technology stack
 
 | Layer | Technology |
 | --- | --- |
 | Web | React 19, Vite, Tailwind CSS |
-| Data and routing | Axios, React Router |
-| Validation | Zod, React Hook Form |
-| Maps | Google Maps and Places |
-| Payments | Stripe Elements and Payment Intents |
+| Mobile | Expo SDK 56, Expo Router, React Native 0.85 |
 | API | Node.js, Express 5 |
 | Database | MySQL, Sequelize |
-| Authentication | JWT, bcrypt |
-| Real-time | Socket.IO |
+| Auth | JWT, bcryptjs |
+| Validation | Zod, React Hook Form |
+| Maps | Google Maps, Google Places, react-native-maps |
+| Payments | Stripe Payment Intents, Stripe Elements, Stripe React Native Payment Sheet |
+| Realtime | Socket.IO |
 | Uploads | Multer |
+| Email | Nodemailer |
 
-## Structure
+## Project structure
 
     car-booking/
     |-- server/
-    |   |-- controllers/    API handlers
-    |   |-- middleware/     Auth, validation, uploads
-    |   |-- models/         Sequelize models
-    |   |-- routes/         Express routes
-    |   |-- services/       Notification services
-    |   |-- socket/         Live tracking
-    |   |-- uploads/        Runtime images
-    |   `-- validation/     Zod schemas
-    `-- web/src/
-        |-- api/            Axios client
-        |-- assets/         Bundled images
-        |-- components/     Shared UI and checkout
-        |-- pages/          Application pages
-        `-- validation/     Client schemas
+    |   |-- controllers/       API handlers
+    |   |-- middleware/        auth, role checks, validation, uploads
+    |   |-- models/            Sequelize models
+    |   |-- routes/            Express routes
+    |   |-- services/          email and notification helpers
+    |   |-- socket/            Socket.IO live tracking
+    |   |-- uploads/           runtime uploaded images
+    |   +-- validation/        Zod schemas
+    |-- web/
+    |   +-- src/
+    |       |-- api/             Axios client
+    |       |-- components/      shared UI, checkout, maps
+    |       |-- pages/           app pages and dashboards
+    |       +-- validation/     web form schemas
+    +-- mobile/
+        |-- app/               Expo Router screens and tabs
+        |-- src/
+        |   |-- components/      mobile UI and booking components
+        |   |-- context/         auth/session state
+        |   |-- lib/             API, types, helpers
+        |   +-- validation/     mobile form schemas
+        +-- app.config.js      native Maps/build config
 
 ## Requirements
 
 - Node.js 20 or newer
-- Yarn 1.x
+- npm or Yarn 1.x
 - MySQL 8 or compatible
-- Google Maps key with Maps JavaScript and Places enabled
-- Stripe test-mode publishable and secret keys
+- Google Cloud project with billing enabled
+- Stripe test account
+- SMTP account for production password-reset email
+- Android Studio/Xcode if building native mobile development builds
 
-## Installation
+## Environment setup
 
-    cd car-booking/server
-    yarn install
-    cd ../web
-    yarn install
+### Server environment
 
-Create `server/.env`:
+Create server/.env:
 
     PORT=5000
     WEB_URL=http://localhost:3000
@@ -93,22 +120,65 @@ Create `server/.env`:
     SMTP_PASSWORD=your_smtp_password
     MAIL_FROM=CarBooking <no-reply@example.com>
 
-Create `web/.env`:
+GOOGLE_PLACES_API_KEY is used by the server-side Places proxy at /api/places. Use a server/API-restricted key for it.
 
-    VITE_GOOGLE_MAPS_API_KEY=your_google_maps_key
+### Web environment
+
+Create web/.env:
+
+    VITE_GOOGLE_MAPS_API_KEY=your_browser_maps_key
     VITE_STRIPE_PUBLIC_KEY=pk_test_your_publishable_key
 
-Never commit environment files or use production Stripe keys locally.
+The browser Google key should allow your local origin, for example http://localhost:3000, and should have Maps JavaScript API and Places API enabled.
+
+### Mobile environment
+
+Create mobile/.env:
+
+    EXPO_PUBLIC_API_URL=http://YOUR_COMPUTER_LAN_IP:5000
+    EXPO_PUBLIC_STRIPE_KEY=pk_test_your_publishable_key
+    EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your_development_maps_key
+    EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY=your_android_restricted_key
+    EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY=your_ios_restricted_key
+
+For a physical phone, do not use localhost. Use your computer LAN IP, for example http://192.168.1.20:5000, and allow port 5000 through Windows Firewall.
+
+Android native Maps keys must allow package name com.jahanmal.carbooking and the debug/release signing SHA-1. iOS keys must allow bundle identifier com.jahanmal.carbooking.
+
+After changing native map keys, rebuild the mobile app with npx expo run:android or npx expo run:ios; hot reload is not enough for native key changes.
+
+Never commit .env files or production secrets.
+
+## Installation
+
+Install the API dependencies:
+
+    cd server
+    npm install
+
+Install the web dependencies:
+
+    cd ../web
+    npm install
+
+Install the mobile dependencies:
+
+    cd ../mobile
+    npm install
+
+Yarn also works if you prefer it.
 
 ## Database setup
+
+Create the development database:
 
     CREATE DATABASE car_booking_db
       CHARACTER SET utf8mb4
       COLLATE utf8mb4_unicode_ci;
 
-The API runs safe `sequelize.sync()` at startup to create missing tables.
+The API uses safe sequelize.sync() on startup to create missing tables. It does not use sync({ alter: true }), because repeated alter syncs can create duplicate MySQL indexes.
 
-Optional development data:
+Optional local seed data:
 
     cd server
     node seedAdmin.js
@@ -117,163 +187,232 @@ Optional development data:
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Admin | `admin@test.com` | `admin123` |
-| Driver | `driver@test.com` | `driver123` |
+| Admin | admin@test.com | admin123 |
+| Driver | driver@test.com | driver123 |
 
-Seed accounts are for local development only.
-
-## Mobile application
-
-The Expo SDK 56 app in mobile provides customer booking and payments, notifications, tracking, profile/password recovery, driver live location, and admin fleet/booking tools. Configure EXPO_PUBLIC_API_URL with the computer LAN address for physical devices and EXPO_PUBLIC_STRIPE_KEY with the Stripe publishable test key. See mobile/README.md for native setup and permissions.
+Seed accounts are only for local development.
 
 ## Running locally
 
-Terminal one:
+Start the API:
 
     cd server
-    yarn dev
+    npm run dev
 
-Terminal two:
+Start the web app:
 
     cd web
-    yarn dev
+    npm run dev
 
-Open `http://localhost:3000`. The API uses `http://localhost:5000`.
+Open http://localhost:3000. The API runs at http://localhost:5000.
+
+Start the mobile app:
+
+    cd mobile
+    npx expo start
+
+For native Stripe and Google Maps testing, use a development build:
+
+    npx expo run:android
+    npx expo run:ios
 
 ## Scripts
 
 | Location | Command | Purpose |
 | --- | --- | --- |
-| Server | `yarn dev` | Start with Nodemon |
-| Server | `yarn start` | Start normally |
-| Server | `yarn migrate:tracking` | Legacy tracking migration |
-| Server | `yarn seed:driver` | Create demo driver |
-| Web | `yarn dev` | Start Vite |
-| Web | `yarn build` | Production build |
-| Web | `yarn preview` | Preview build |
-| Web | `yarn lint` | Run ESLint |
+| Server | npm run dev | Start API with Nodemon |
+| Server | npm start | Start API normally |
+| Server | npm run migrate:tracking | Legacy tracking migration |
+| Server | npm run seed:driver | Create demo driver |
+| Web | npm run dev | Start Vite on port 3000 |
+| Web | npm run build | Build production web app |
+| Web | npm run preview | Preview production build |
+| Web | npm run lint | Run web ESLint |
+| Mobile | npm start | Start Expo |
+| Mobile | npm run android | Build/run Android development app |
+| Mobile | npm run ios | Build/run iOS development app |
+| Mobile | npm run web | Run Expo web target |
+| Mobile | npm run lint | Run Expo lint |
 
-## Models
+## Core models
 
-- **User:** customer, admin, or driver.
-- **Car:** name, type, image, and per-kilometer price.
-- **Booking:** route, coordinates, schedule, fare, status, and Stripe reference.
-- **RideTracking:** driver, position, movement data, sharing state, and last seen.
-- **Notification:** persistent message, link, metadata, and read time.
-- **SiteSetting:** key-value configuration such as the homepage hero.
-- **PasswordResetToken:** hashed, expiring, single-use password reset request.
+- User: customer, admin, or driver account.
+- Car: fleet car with name, type, image URL, price per kilometer, and availability data.
+- Booking: route, coordinates, schedule, fare, selected car, status, payment status, and Stripe references.
+- RideTracking: claimed driver, current position, movement data, sharing state, and last seen time.
+- Notification: persistent user notification with metadata, link, read state, and timestamp.
+- SiteSetting: homepage appearance values such as hero banner image/title/copy.
+- PasswordResetToken: hashed, expiring, single-use password reset token.
 
-Booking states: `pending`, `accepted`, `completed`, `cancelled`.
-Payment states: `unpaid`, `paid`, `refunded`.
+Booking states: pending, accepted, completed, cancelled.
+
+Payment states: unpaid, paid, refunded.
 
 ## API overview
 
-Protected routes require `Authorization: Bearer <jwt>`.
+Protected routes require this header:
+
+    Authorization: Bearer <jwt>
 
 | Area | Method and endpoint | Access |
 | --- | --- | --- |
-| Auth | `POST /api/auth/register`, `POST /api/auth/login` | Public |
-| Password reset | POST /api/auth/forgot-password, POST /api/auth/reset-password | Public |
-| Account | GET /api/auth/profile, PUT /api/auth/profile | Authenticated owner |
+| Auth | POST /api/auth/register | Public |
+| Auth | POST /api/auth/login | Public |
+| Password reset | POST /api/auth/forgot-password | Public |
+| Password reset | POST /api/auth/reset-password | Public |
+| Account | GET /api/auth/profile | Authenticated |
+| Account | PUT /api/auth/profile | Authenticated owner |
 | Account | PUT /api/auth/change-password | Authenticated owner |
-| Cars | `GET /api/cars` | Public |
-| Cars | `POST /api/cars`, `PUT /api/cars/:id`, `DELETE /api/cars/:id` | Admin |
-| Uploads | `POST /api/uploads/image` | Admin |
-| Bookings | `POST /api/bookings`, `GET /api/bookings/my-bookings` | Customer |
-| Bookings | `GET /api/bookings/all`, `PUT /api/bookings/:id/status` | Admin |
-| Bookings | `PUT /api/bookings/:id/cancel` | Owner |
-| Payments | `POST /api/payments/create-payment-intent` | Owner |
-| Payments | `POST /api/payments/mark-paid` | Owner |
-| Tracking | `GET /api/tracking/driver/rides` | Driver |
-| Tracking | `POST /api/tracking/:bookingId/claim`, `PUT /api/tracking/:bookingId/stop` | Driver |
-| Tracking | `GET /api/tracking/:bookingId` | Ride participant |
-| Notifications | `GET /api/notifications`, `PUT /api/notifications/read-all` | Authenticated |
-| Notifications | `PUT /api/notifications/:id/read` | Owner |
-| Appearance | `GET /api/settings/home` | Public |
-| Appearance | `PUT /api/settings/home` | Admin |
+| Cars | GET /api/cars | Public |
+| Cars | POST /api/cars | Admin |
+| Cars | PUT /api/cars/:id | Admin |
+| Cars | DELETE /api/cars/:id | Admin |
+| Uploads | POST /api/uploads/image | Admin |
+| Bookings | POST /api/bookings | Customer |
+| Bookings | GET /api/bookings/my-bookings | Customer |
+| Bookings | GET /api/bookings/all | Admin |
+| Bookings | PUT /api/bookings/:id/status | Admin |
+| Bookings | PUT /api/bookings/:id/cancel | Booking owner |
+| Payments | POST /api/payments/create-payment-intent | Booking owner |
+| Payments | POST /api/payments/mark-paid | Booking owner |
+| Tracking | GET /api/tracking/driver/rides | Driver |
+| Tracking | POST /api/tracking/:bookingId/claim | Driver |
+| Tracking | PUT /api/tracking/:bookingId/stop | Driver |
+| Tracking | PUT /api/tracking/:bookingId/complete | Claimed driver |
+| Tracking | GET /api/tracking/:bookingId | Ride participant |
+| Notifications | GET /api/notifications | Authenticated |
+| Notifications | PUT /api/notifications/read-all | Authenticated |
+| Notifications | PUT /api/notifications/:id/read | Notification owner |
+| Places | GET /api/places/autocomplete | Public |
+| Places | GET /api/places/details | Public |
+| Appearance | GET /api/settings/home | Public |
+| Appearance | PUT /api/settings/home | Admin |
 
-Car and booking list endpoints support search, filters, sorting, and pagination. Uploads use multipart field `image`; JPG, PNG, and WebP are accepted up to 5 MB.
+Car and booking list endpoints support search, filtering, sorting, and pagination. Uploads use multipart field image.
 
-Socket events include `join-booking`, `driver-location`, `driver-offline`, and `stop-sharing`.
+## Socket.IO events
 
-## Authentication and account lifecycle
+The API uses Socket.IO for realtime app updates and driver tracking. Important events include:
 
-- Login stores the JWT and user summary locally, then emits an in-app authentication event so the persistent navbar updates immediately.
-- Logout disconnects Socket.IO, removes the JWT and user summary, clears navbar state, and redirects to sign in without requiring a refresh.
-- Profile name changes update local user data and all visible navigation account details immediately.
-- Password changes require the current password and invalidate active password-reset links.
-- Forgot-password tokens are random, hashed in the database, single-use, and valid for 15 minutes.
+- join-booking
+- driver-location
+- driver-offline
+- stop-sharing
+- notification updates for authenticated users
 
-## Account settings
+## Validation
 
-Authenticated users can update their own display name and change their password from /profile. Account ownership comes exclusively from the verified JWT; profile routes do not accept a target user ID. Password changes require the current password, reject password reuse, and invalidate active reset links.
+Validation is handled with reusable schemas instead of hard-coded checks:
 
-## Password reset flow
+- Server request body/query validation uses Zod in server/validation.
+- Web and mobile forms use Zod with React Hook Form where forms need structured validation.
+- API validation errors are returned as clean messages for the UI.
 
-1. A user submits an email address and always receives the same generic response.
-2. The server creates a random token, stores only its SHA-256 hash, and sets a 15-minute expiry.
-3. Nodemailer sends the reset URL through SMTP.
-4. The reset page validates and submits the new password.
-5. The server consumes every active reset token for the account after updating the password.
+## Payments
 
-When SMTP is absent outside production, the API logs and returns a development-only reset URL. Production requires SMTP configuration.
+1. The customer opens payment for an owned booking.
+2. The server rejects cancelled, already paid, or unauthorized bookings.
+3. The server creates a Stripe PaymentIntent with booking/user metadata.
+4. Web uses Stripe Elements; mobile uses the native Stripe Payment Sheet.
+5. Mobile Payment Sheet is forced to dark theme for consistent card UI.
+6. After Stripe confirms payment, the app asks the server to verify the PaymentIntent.
+7. The server verifies amount, currency, metadata, and status before marking the booking paid.
+8. Admin booking screens show whether the customer has paid.
 
-## Secure payment flow
+Use Stripe test mode and official test cards during development.
 
-1. The server verifies booking ownership and rejects paid or cancelled bookings.
-2. It creates a CAD Stripe PaymentIntent.
-3. Stripe Elements collects card details; this application never stores them.
-4. Stripe confirms the payment.
-5. The server retrieves and verifies status, amount, currency, user, and booking metadata.
-6. Only then is the booking marked paid and a notification created.
-7. Eligible paid cancellations are refunded through Stripe.
+## Images and uploads
 
-Use test mode and official Stripe test cards during development.
+- Uploaded images are stored in server/uploads.
+- Uploaded images are served from /uploads/:filename.
+- Web and mobile admin screens can upload car images and homepage hero images.
+- Admins can also use direct image URLs.
+- Runtime uploaded files are excluded from Git.
 
-## Image storage
+For production, move uploads to durable storage such as S3, R2, or another object-storage service.
 
-Uploads are stored in `server/uploads` and served at `/uploads/:filename`. Runtime files are excluded from Git. Use durable object storage such as S3 or R2 in production.
+## Google Maps and Places
 
-## Security
+Web uses a browser Maps key. Mobile native maps use Android/iOS native keys from Expo config. Address autocomplete uses the API proxy:
 
-- bcrypt password hashing and JWT-protected APIs and sockets
+- GET /api/places/autocomplete?input=Kabul
+- GET /api/places/details?placeId=...
+
+This keeps the server-side Places key out of the mobile/web client and gives both apps the same autocomplete behavior.
+
+## Security notes
+
+- bcryptjs password hashing
+- JWT-protected API routes and Socket.IO connections
 - Customer, admin, and driver role checks
-- Zod request validation
+- Zod validation for request bodies and query parameters
 - Restricted upload MIME type, count, and size
 - Server-side Stripe PaymentIntent verification
-- Environment-based secrets
+- Hashed, single-use, expiring password-reset tokens
+- Secrets loaded from environment variables
 
-For production, add HTTPS, rate limiting, security headers, database backups, durable uploads, restrictive CORS, and Stripe webhooks.
+Before production, add HTTPS, rate limiting, security headers, strict CORS, Stripe webhooks, database backups, durable upload storage, and production-grade logging/monitoring.
 
 ## Troubleshooting
 
 ### MySQL: Too many keys specified
-Repeated `sync({ alter: true })` can create duplicate indexes. This project uses plain `sync()`. Remove duplicate development indexes or recreate the development database.
+
+This happens when sequelize.sync({ alter: true }) repeatedly creates duplicate indexes. The project now uses plain sequelize.sync(). For a development database that already has duplicate indexes, remove the duplicates manually or recreate the development database.
 
 ### Hero image remains old
-Inspect `/api/settings/home` and confirm its `/uploads/...` URL works. Settings disable caching and refresh when the window regains focus.
+
+Check GET /api/settings/home and confirm the returned /uploads/... URL opens in the browser. Restart the API if environment or upload paths changed. The UI refreshes settings on page focus, but a stale browser cache may still need a hard refresh during development.
+
+### Payment does not open on mobile
+
+Confirm:
+
+- EXPO_PUBLIC_STRIPE_KEY is a publishable pk_test key.
+- STRIPE_SECRET_KEY is a secret sk_test key.
+- The booking belongs to the signed-in customer.
+- The booking is not cancelled and not already paid.
+- You are using a development build, not a limited Expo Go setup, for native Stripe testing.
+
+### Google Maps does not show on mobile
+
+Confirm:
+
+- Maps SDK for Android/iOS is enabled in Google Cloud.
+- The Android key allows package com.jahanmal.carbooking and the correct SHA-1.
+- The iOS key allows bundle identifier com.jahanmal.carbooking.
+- You rebuilt the native app after changing keys.
+- The phone can reach the API LAN URL.
+
+### Places autocomplete does not show suggestions
+
+Confirm GOOGLE_PLACES_API_KEY exists in server/.env, Places API is enabled, and this works from the phone/browser:
+
+    http://YOUR_COMPUTER_LAN_IP:5000/api/places/autocomplete?input=Kabul
+
+### Phone cannot connect to API
+
+Physical phones cannot use the computer's localhost. Set EXPO_PUBLIC_API_URL to your computer LAN IP and allow inbound TCP port 5000 through the firewall.
+
+### CORS error on web
+
+Set WEB_URL in server/.env to the exact frontend origin, for example http://localhost:3000, then restart the API.
 
 ### Password reset email does not arrive
 
-Check the SMTP host, port, secure mode, credentials, sender address, spam folder, and server logs. Restart the API after changing environment variables.
+Check SMTP host, port, secure mode, username, password, sender address, spam folder, and server logs. In non-production development without SMTP, the API can log a reset URL for testing.
 
-### Payment initialization fails
-Confirm Stripe keys use test mode, the booking belongs to the signed-in user, and it is neither paid nor cancelled. Safe messages appear in the UI while diagnostics remain in server logs.
+## Production checklist
 
-### Google Maps fails
-Enable Maps JavaScript and Places, configure billing and origin restrictions, add the Vite key, and restart Vite.
-
-### CORS failure
-Set `WEB_URL` to the exact frontend origin and restart the API.
-
-## Production
-
-1. Build the web app with `yarn build`.
-2. Serve `web/dist` through a static host or reverse proxy.
-3. Start the API with production environment variables.
-4. Use HTTPS and managed MySQL.
-5. Move uploads to durable object storage.
-6. Configure Stripe webhooks and restrict API keys.
+1. Build the web app with npm run build.
+2. Serve web/dist from a static host or reverse proxy.
+3. Run the API with production environment variables.
+4. Use HTTPS everywhere.
+5. Use managed MySQL with backups.
+6. Move uploads to durable object storage.
+7. Configure Stripe webhooks.
+8. Restrict all Google and Stripe keys.
+9. Add rate limiting and security headers.
+10. Build signed mobile apps with production API, Maps, and Stripe keys.
 
 ## Author
 
