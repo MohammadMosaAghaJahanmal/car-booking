@@ -1,4 +1,76 @@
-import{useState}from'react';import{Text,View}from'react-native';import{Link,router}from'expo-router';import{AuthShell}from'@/components/auth-shell';import{AlertBox,Button,Field,Label}from'@/components/ui/kit';import{useAuth}from'@/context/auth';import{messageFrom}from'@/lib/api';
-export default function Register(){const{signUp}=useAuth();const[name,setName]=useState('');const[email,setEmail]=useState('');const[password,setPassword]=useState('');const[loading,setLoading]=useState(false);const[error,setError]=useState('');
- const submit=async()=>{if(name.trim().length<2)return setError('Enter your full name.');if(password.length<6)return setError('Password must contain at least 6 characters.');try{setLoading(true);setError('');await signUp(name.trim(),email.trim().toLowerCase(),password);router.replace('/(tabs)/home')}catch(e){setError(messageFrom(e,'Could not create your account.'))}finally{setLoading(false)}};
- return <AuthShell eyebrow="Join CarBooking" title="Create account" description="Book confidently and keep every journey in one place."><View style={{gap:15}}><View><Label>Name</Label><Field value={name} onChangeText={setName} autoComplete="name" placeholder="Your name"/></View><View><Label>Email</Label><Field value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="you@example.com"/></View><View><Label>Password</Label><Field value={password} onChangeText={setPassword} secureTextEntry placeholder="Minimum 6 characters"/></View><AlertBox message={error}/><Button title="Create account" loading={loading} onPress={submit}/><Text style={{textAlign:'center',color:'#64748b'}}>Already registered? <Link href="/login" style={{color:'#2563eb',fontWeight:'900'}}>Sign in</Link></Text></View></AuthShell>}
+import { useState } from "react";
+import { Text, View } from "react-native";
+import { Link, router } from "expo-router";
+import { AuthShell } from "@/components/auth-shell";
+import { AlertBox, Button, Field, Label } from "@/components/ui/kit";
+import { useAuth } from "@/context/auth";
+import { messageFrom } from "@/lib/api";
+export default function Register() {
+  const { signUp } = useAuth();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const submit = async () => {
+    if (name.trim().length < 2) return setError("Enter your full name.");
+    if (password.length < 6)
+      return setError("Password must contain at least 6 characters.");
+    try {
+      setLoading(true);
+      setError("");
+      await signUp(name.trim(), email.trim().toLowerCase(), password);
+      router.replace("/(tabs)/home");
+    } catch (e) {
+      setError(messageFrom(e, "Could not create your account."));
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <AuthShell
+      eyebrow="Join CarBooking"
+      title="Create account"
+      description="Book confidently and keep every journey in one place."
+    >
+      <View style={{ gap: 15 }}>
+        <View>
+          <Label>Name</Label>
+          <Field
+            value={name}
+            onChangeText={setName}
+            autoComplete="name"
+            placeholder="Your name"
+          />
+        </View>
+        <View>
+          <Label>Email</Label>
+          <Field
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            placeholder="you@example.com"
+          />
+        </View>
+        <View>
+          <Label>Password</Label>
+          <Field
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholder="Minimum 6 characters"
+          />
+        </View>
+        <AlertBox message={error} />
+        <Button title="Create account" loading={loading} onPress={submit} />
+        <Text style={{ textAlign: "center", color: "#64748b" }}>
+          Already registered?{" "}
+          <Link href="/login" style={{ color: "#2563eb", fontWeight: "900" }}>
+            Sign in
+          </Link>
+        </Text>
+      </View>
+    </AuthShell>
+  );
+}
